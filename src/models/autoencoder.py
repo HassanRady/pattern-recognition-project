@@ -9,16 +9,14 @@ import torch.nn as nn
 import lightning as pl
 from lightning import Trainer
 
-from config import AutoencoderHPOConfig, init_autoencoder_hpo_config
-from data.data_manager import read_parquet, save_csv
+from src.config import AutoencoderHPOConfig, init_autoencoder_hpo_config
+from src.data.data_manager import read_parquet, save_csv
 from torch.utils.data import DataLoader, TensorDataset, random_split
 
-from models.core import run_hpo
-from models.hpo_spaces import autoencoder_hpo_space
-from utils.args import parse_config_path_args
-from utils.registry import sklearn_scaler_registry, ActivationLayerType, ScalerType
-
-from src.utils.registry import activation_layer_registry
+from src.models.core import run_hpo
+from src.models.hpo_spaces import autoencoder_hpo_space
+from src.utils.args import parse_config_path_args
+from src.utils.registry import sklearn_scaler_registry, activation_layer_registry, ActivationLayerType, ScalerType
 
 
 class AutoEncoder(pl.LightningModule):
