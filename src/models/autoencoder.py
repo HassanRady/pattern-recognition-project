@@ -9,6 +9,7 @@ import torch.nn as nn
 import lightning as pl
 from lightning import Trainer
 
+from src.data.dataset import load_time_series_with_describe_features
 from src.config import AutoencoderHPOConfig, init_autoencoder_hpo_config
 from src.data.data_manager import read_parquet, save_csv
 from torch.utils.data import DataLoader, TensorDataset, random_split
@@ -16,7 +17,12 @@ from torch.utils.data import DataLoader, TensorDataset, random_split
 from src.models.core import run_hpo
 from src.models.hpo_spaces import autoencoder_hpo_space
 from src.utils.args import parse_config_path_args
-from src.utils.registry import sklearn_scaler_registry, activation_layer_registry, ActivationLayerType, ScalerType
+from src.utils.registry import (
+    sklearn_scaler_registry,
+    activation_layer_registry,
+    ActivationLayerType,
+    ScalerType,
+)
 
 
 class AutoEncoder(pl.LightningModule):
@@ -136,7 +142,6 @@ def hpo_objective(
         val_size = len(dataset) - train_size
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
-
         train_loader = DataLoader(
             train_dataset,
             batch_size=batch_size,
@@ -211,9 +216,8 @@ if __name__ == "__main__":
     args = parse_config_path_args()
     config = init_autoencoder_hpo_config(args.config_path)
 
-    df = read_parquet(
-        config.dataset_path,
-    )
+    df = load_time_series_with_describe_features(config.dataset_path)
+    index = df.pop("id")
 
     run_hpo_pipeline(
         config=config,
