@@ -11,19 +11,19 @@ from sklearn.preprocessing import (
 
 from torch import nn
 
-ActivationFunctionType = Union[nn.ReLU, nn.Tanh]
+ActivationLayerType = Union[nn.ReLU, nn.Tanh]
 
 
-class ActivationFunctions(Enum):
+class ActivationLayers(Enum):
     RELU = "relu"
     LEAKY_RELU = "leaky_relu"
     TANH = "tanh"
 
 
 activation_layer_registry = {
-    ActivationFunctions.RELU.value: nn.ReLU,
-    ActivationFunctions.TANH.value: nn.Tanh,
-    ActivationFunctions.LEAKY_RELU.value: nn.LeakyReLU,
+    ActivationLayers.RELU.value: nn.ReLU,
+    ActivationLayers.TANH.value: nn.Tanh,
+    ActivationLayers.LEAKY_RELU.value: nn.LeakyReLU,
 }
 
 ScalerType = Union[

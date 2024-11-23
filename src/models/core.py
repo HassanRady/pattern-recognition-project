@@ -9,7 +9,7 @@ from src.logger import (
 
 LOGGER = get_console_logger(logger_name=__name__)
 
-def run_hpo_experiment(
+def run_hpo(
     n_trials: int,
     hpo_path: Path,
     study_name: str,

@@ -5,7 +5,7 @@ import optuna
 from src.utils.registry import (
     sklearn_scaler_registry,
     SklearnScalers,
-    ActivationFunctions,
+    ActivationLayers, activation_layer_registry,
 )
 
 
@@ -590,10 +590,10 @@ def autoencoder_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         "hidden_dims": [
             trial.suggest_int(f"n_units_l{i}", 16, 1024) for i in range(n_layers)
         ],
-        "activation_function": trial.suggest_categorical(
-            "activation_function",
-            [activation.value for activation in ActivationFunctions],
-        ),
+        "activation_layer": activation_layer_registry[trial.suggest_categorical(
+            "activation_layer",
+            [activation.value for activation in ActivationLayers],
+        )],
         "learning_rate": trial.suggest_float("learning_rate", 1e-5, 1e-1),
         "epochs": trial.suggest_int("epochs", 10, 100),
         "batch_size": trial.suggest_categorical("batch_size", [128]),
