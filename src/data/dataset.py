@@ -41,7 +41,6 @@ def load_time_series_with_describe_features(
             )
 
         all_results.extend(results)
-        break
 
     stats, indexes = zip(*all_results)
     stats_df = pd.DataFrame(stats, columns=[f"Stat_{i}" for i in range(len(stats[0]))])

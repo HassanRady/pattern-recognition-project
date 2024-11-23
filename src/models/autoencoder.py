@@ -104,6 +104,7 @@ def autoencode(
         max_epochs=epochs,
         accelerator="gpu",
         enable_progress_bar=True,
+        logger=False,
     )
     trainer.fit(autoencoder, train_dataloaders=data_loader)
 
@@ -164,6 +165,7 @@ def hpo_objective(
             max_epochs=epochs,
             accelerator="gpu" if torch.cuda.is_available() else "cpu",
             enable_progress_bar=True,
+            logger=False,
         )
         trainer.fit(
             autoencoder, train_dataloaders=train_loader, val_dataloaders=val_loader
