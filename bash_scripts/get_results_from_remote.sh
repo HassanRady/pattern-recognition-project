@@ -1,1 +1,1 @@
-scp -r iwfa106h@woody.nhr.fau.de:results/ /mnt/MAIN/Master/SS-24/ai-faps-hassan-rady/
+scp -r iwi5253h@tinyx.nhr.fau.de:results/ /mnt/MAIN/Master/WS-24-25/Pattern-Recognition-Project/pattern-recognition-project/

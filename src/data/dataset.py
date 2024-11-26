@@ -3,7 +3,6 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pandas as pd
-from tqdm import tqdm
 
 from src.logger import get_console_logger
 

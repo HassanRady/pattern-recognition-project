@@ -31,16 +31,10 @@ def read_csv(
 
 
 def save_csv(df: pd.DataFrame, path: Union[Path, str]):
+    LOGGER.info(f"Saving csv to {path}")
     path = Path(path) if isinstance(path, str) else path
     path.parent.mkdir(parents=True, exist_ok=True)
-
-    def _save_csv() -> None:
-        df.to_csv(path)
-        LOGGER.info(f"Saved csv to {path}")
-
-    thread = threading.Thread(target=_save_csv)
-    thread.start()
-    return thread
+    df.to_csv(path)
 
 
 def save_model(model: Any, path: Path) -> None:

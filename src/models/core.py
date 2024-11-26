@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Tuple, Callable
+from typing import Any, Tuple, Callable, Optional
 
 import optuna
 
@@ -17,6 +17,7 @@ def run_hpo(
         ...,
         float,
     ],
+    n_jobs: Optional[int] = -1,
 ) -> Tuple[int, dict[str, Any], float, dict[str, Any]]:
     hpo_path.mkdir(parents=True, exist_ok=True)
     study = optuna.create_study(
@@ -29,7 +30,7 @@ def run_hpo(
     study.optimize(
         objective,
         n_trials=n_trials,
-        n_jobs=-1,
+        n_jobs=n_jobs,
     )
     return (
         study.best_trial.number,

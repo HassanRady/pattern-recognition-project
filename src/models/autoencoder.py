@@ -196,6 +196,7 @@ def run_hpo_pipeline(
             df=df,
             hpo_space=autoencoder_hpo_space,
         ),
+        n_jobs=1,
     )
 
     hidden_dims = []
