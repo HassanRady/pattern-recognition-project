@@ -1,5 +1,17 @@
 from enum import Enum
 from typing import Union
+
+from catboost import CatBoostRegressor
+from lightgbm import LGBMRegressor
+from sklearn.ensemble import (
+    RandomForestRegressor,
+    AdaBoostRegressor,
+    GradientBoostingRegressor,
+)
+from sklearn.linear_model import Ridge, Lasso, LinearRegression, ElasticNet
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
     MinMaxScaler,
     StandardScaler,
@@ -8,6 +20,12 @@ from sklearn.preprocessing import (
     QuantileTransformer,
     PowerTransformer,
 )
+from sklearn.svm import SVR
+from sklearn.tree import DecisionTreeRegressor
+from xgboost import XGBRegressor
+
+
+from sklearn.impute import KNNImputer, SimpleImputer
 
 from torch import nn
 
@@ -53,3 +71,62 @@ sklearn_scaler_registry = {
     SklearnScalers.QUANTILE.value: QuantileTransformer,
     SklearnScalers.POWER.value: PowerTransformer,
 }
+
+
+class SklearnImputers(Enum):
+    KNN = "KNNImputer"
+    MEAN = "SimpleImputer"
+
+
+sklearn_imputer_registry = {
+    SklearnImputers.KNN.value: KNNImputer,
+    SklearnImputers.MEAN.value: SimpleImputer,
+}
+
+
+RegressionEstimator = Union[
+    SVR,
+    LinearRegression,
+    Ridge,
+    Lasso,
+    ElasticNet,
+    RandomForestRegressor,
+    AdaBoostRegressor,
+    GradientBoostingRegressor,
+    DecisionTreeRegressor,
+    KNeighborsRegressor,
+    XGBRegressor,
+    LGBMRegressor,
+    CatBoostRegressor,
+    Pipeline,
+    MLPRegressor,
+]
+
+sklearn_regression_estimators_registry = {
+    "svm": SVR,
+    "linear_regression": LinearRegression,
+    "ridge": Ridge,
+    "lasso": Lasso,
+    "elastic_net": ElasticNet,
+    "random_forest": RandomForestRegressor,
+    "ada_boost": AdaBoostRegressor,
+    "gradient_boosting": GradientBoostingRegressor,
+    "xgb": XGBRegressor,
+    "lightgbm": LGBMRegressor,
+    "catboost": CatBoostRegressor,
+    "decision_tree": DecisionTreeRegressor,
+    "knn": KNeighborsRegressor,
+    "mlp": MLPRegressor,
+}
+
+
+def parse_sklearn_scaler(scaler: str) -> ScalerType:
+    return sklearn_scaler_registry[scaler]
+
+
+def get_estimator_importance_attribute(estimator: type[RegressionEstimator]) -> str:
+    return (
+        "feature_importances_"
+        if hasattr(estimator, "feature_importances_")
+        else "coef_"
+    )

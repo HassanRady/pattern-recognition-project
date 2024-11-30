@@ -1,41 +1,50 @@
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
 from sklearn import metrics
+from torch.ao.nn.quantized.functional import threshold
 
 from src import utils
 
 
+def threshold_rounder(y_pred, thresholds):
+    thresholds = np.sort(thresholds)
+    rounded_values = np.zeros_like(y_pred, dtype=int)
+    for i, threshold in enumerate(thresholds):
+        rounded_values[y_pred >= threshold] = i + 1
+
+    return rounded_values
+
+
 def quadratic_weighted_kappa(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """
-    Calculates the quadratic weighted kappa metric.
-
-    This function calculates the quadratic weighted kappa metric, which is a measure of
-    agreement between two sets of ratings. The metric's value ranges from -1 to 1, with
-    1 indicating perfect agreement and -1 indicating perfect disagreement.
-
-    Parameters:
-        y_true (np.ndarray): Array of true target values.
-        y_pred (np.ndarray): Array of predicted target values by the model.
-
-    Returns:
-        float: The calculated quadratic weighted kappa metric.
-    """
     return metrics.cohen_kappa_score(y_true, y_pred, weights="quadratic")
 
 
+def optimize_thresholds(
+    scorer,
+    y_true,
+    y_pred,
+    initial_thresholds=np.array([0.5, 1.5, 2.5]),
+):
+
+    def _evaluate_predictions(thresholds, scorer, y_true, y_pred):
+        y_pred = threshold_rounder(y_pred, thresholds)
+        return -scorer(y_true, y_pred)
+
+    result = minimize(
+        fun=_evaluate_predictions,
+        x0=initial_thresholds,
+        args=(scorer, y_true, y_pred),
+        method="Nelder-Mead",
+    )
+
+    if not result.success:
+        print("Warning: Optimization did not converge. Using the best result found.")
+
+    return result.x
+
+
 def _merge_non_nan(series: pd.Series) -> pd.Series:
-    """
-    Merges non-NaN values in a Series, returning the first non-NaN value or NaN if none exist.
-
-    This helper function is used to consolidate values in a Series by dropping NaN values
-    and returning the first valid entry. If all entries are NaN, it returns NaN.
-
-    Parameters:
-        series (pd.Series): A Series potentially containing NaN values.
-
-    Returns:
-        Any: The first non-NaN value in the series, or NaN if no non-NaN values are present.
-    """
     return series.dropna().iloc[0] if not series.dropna().empty else np.nan
 
 
@@ -43,28 +52,10 @@ def evaluate(
     y_true: np.ndarray,
     y_pred: np.ndarray,
 ) -> pd.DataFrame:
-    """
-    Evaluates predictions against true values using predefined metrics.
-
-    This function calculates a set of metrics to assess model performance, with each metric
-    score stored in a DataFrame. The results are aggregated, rounded to three decimal places,
-    and returned as a single-row DataFrame.
-
-    Parameters:
-        y_true (np.ndarray): Array of true target values.
-        y_pred (np.ndarray): Array of predicted target values by the model.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing the calculated metric scores, aggregated
-                      and rounded to three decimal places.
-
-    Notes:
-        - Metrics are defined in the global `METRICS` dictionary, where keys are metric names
-          and values are callable functions.
-        - Uses `_merge_non_nan` to handle any NaN values in the aggregation process.
-    """
     metric_df = pd.DataFrame()
     for metric, func in METRICS.items():
+        thresholds = optimize_thresholds(func, y_true, y_pred)
+        y_pred = threshold_rounder(y_pred, thresholds)
         score = func(y_true, y_pred)
         metric_df = pd.concat([metric_df, pd.DataFrame({metric: [score]})], axis=0)
     return metric_df.agg(_merge_non_nan).round(3).to_frame().T

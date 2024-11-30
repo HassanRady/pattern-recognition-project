@@ -1,9 +1,11 @@
 import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Tuple
 
 import pandas as pd
 
+import utils
 from src.logger import get_console_logger
 
 LOGGER = get_console_logger(logger_name=__name__)
@@ -46,3 +48,14 @@ def load_time_series_with_describe_features(
     stats_df["id"] = indexes
 
     return stats_df
+
+
+def read_tabular_dataset(path: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    LOGGER.info(f"Reading tabular dataset from {path}")
+    train_path = path / "train.csv"
+    train_df = pd.read_csv(train_path)
+    train_df.set_index("id", inplace=True)
+    test_path = path / "test.csv"
+    test_df = pd.read_csv(test_path)
+    test_df.set_index("id", inplace=True)
+    return train_df, test_df

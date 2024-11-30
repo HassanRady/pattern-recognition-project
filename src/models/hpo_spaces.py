@@ -1,12 +1,37 @@
 from typing import Any
 
 import optuna
+from sklearn.impute import SimpleImputer, KNNImputer
 
 from src.utils.registry import (
     sklearn_scaler_registry,
     SklearnScalers,
-    ActivationLayers, activation_layer_registry,
+    ActivationLayers,
+    activation_layer_registry,
+    SklearnImputers,
 )
+
+
+def imputer_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
+    imputer_type = trial.suggest_categorical(
+        "imputer_type", [imputer.value for imputer in SklearnImputers]
+    )
+
+    if imputer_type == "SimpleImputer":
+        imputer_strategy = trial.suggest_categorical(
+            "imputer_strategy", ["mean", "median", "most_frequent"]
+        )
+
+        imputer = SimpleImputer(strategy=imputer_strategy)
+
+    elif imputer_type == "KNNImputer":
+        n_neighbors = trial.suggest_int("n_neighbors", 2, 20)
+        weights = trial.suggest_categorical("weights", ["uniform", "distance"])
+        imputer = KNNImputer(n_neighbors=n_neighbors, weights=weights)
+
+    return {
+        "imputer": imputer,
+    }
 
 
 def scaler_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
@@ -45,38 +70,9 @@ def scaler_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
 
 
 def svm_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
-    """
-    Defines the hyperparameter optimization (HPO) space for an SVM model.
 
-    This function uses Optuna to suggest hyperparameters for an SVM model, including
-    scaling, regularization (`C`), and epsilon parameters. The kernel is fixed to `"linear"`
-    for compatibility with recursive feature elimination (RFE).
-
-    Parameters:
-    ----------
-    trial : optuna.Trial
-        An Optuna trial object used to sample hyperparameters.
-
-    Returns:
-    -------
-    dict[str, Any]
-        A dictionary containing the hyperparameters for an SVM model, including:
-        - `scaler`: Scaling parameters from `scaler_hpo_space`.
-        - `C`: Regularization parameter, sampled logarithmically between `1e-3` and `1e3`.
-        - `epsilon`: Epsilon parameter for SVR, sampled logarithmically between `1e-3` and `1e1`.
-        - `kernel`: Fixed to `"linear"` for feature selection compatibility.
-
-    Example:
-    --------
-    >>> svm_hpo_space(trial)
-    {
-        "scaler": <ScalerClass>,
-        "C": 0.1,
-        "epsilon": 0.01,
-        "kernel": "linear",
-    }
-    """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "C": trial.suggest_float("C", 1e-3, 1e3, log=True),
         "epsilon": trial.suggest_float("epsilon", 1e-3, 1e1, log=True),
@@ -111,6 +107,7 @@ def linear_regression_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
     }
 
@@ -590,11 +587,30 @@ def autoencoder_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         "hidden_dims": [
             trial.suggest_int(f"n_units_l{i}", 16, 1024) for i in range(n_layers)
         ],
-        "activation_layer": activation_layer_registry[trial.suggest_categorical(
-            "activation_layer",
-            [activation.value for activation in ActivationLayers],
-        )],
+        "activation_layer": activation_layer_registry[
+            trial.suggest_categorical(
+                "activation_layer",
+                [activation.value for activation in ActivationLayers],
+            )
+        ],
         "learning_rate": trial.suggest_float("learning_rate", 1e-5, 1e-1),
         "epochs": trial.suggest_int("epochs", 10, 100),
         "batch_size": trial.suggest_categorical("batch_size", [128]),
     }
+
+
+estimators_hpo_space_mapping = {
+    "svm": svm_hpo_space,
+    "linear_regression": linear_regression_hpo_space,
+    "ridge": ridge_hpo_space,
+    "lasso": lasso_hpo_space,
+    "elastic_net": elastic_net_hpo_space,
+    "random_forest": random_forest_hpo_space,
+    "gradient_boosting": gradient_boost_hpo_space,
+    "xgb": xgb_hpo_space,
+    "lightgbm": lightgbm_hpo_space,
+    "catboost": catboost_hpo_space,
+    "decision_tree": decision_tree_hpo_space,
+    "knn": knn_hpo_space,
+    "mlp": mlp_hpo_space,
+}

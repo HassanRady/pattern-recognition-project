@@ -21,6 +21,25 @@ class AutoencoderHPOConfig(BaseModel):
     save_data_path: Path
 
 
+class EstimatorsPipeline(BaseModel):
+    """Configuration for the pipeline of estimators"""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    name: str
+    hpo_trials: int
+
+
+class PipelineConfig(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
+    correlation_threshold: Optional[float] = 0.0
+    estimators: list[EstimatorsPipeline]
+    hpo_study_name: str
+    tabular_dataset_path: Path
+    artifacts_path: Path
+
+
 
 def _load_config(path: Union[str, Path]) -> dict:
     """
@@ -42,3 +61,7 @@ def _load_config(path: Union[str, Path]) -> dict:
 
 def init_autoencoder_hpo_config(path: Union[str, Path]) -> AutoencoderHPOConfig:
     return AutoencoderHPOConfig(**_load_config(path))
+
+
+def init_pipeline_config(path: Union[str, Path]) -> PipelineConfig:
+    return PipelineConfig(**_load_config(path))

@@ -16,6 +16,7 @@ required_packages = [
     "xgboost",
     "catboost",
     "lightgbm",
+    "scipy",
 ]
 dev_required_packages = [
     "mypy",

@@ -1,11 +1,12 @@
-import threading
 from pathlib import Path
 from typing import Any, Tuple, Union, List, Optional
 
 import joblib
+import numpy as np
 import pandas as pd
 import numpy.typing as npt
 
+import utils.constants
 from src.logger import get_console_logger
 
 LOGGER = get_console_logger(logger_name=__name__)
@@ -53,9 +54,9 @@ def load_model(path: Path) -> Any:
 
 
 def prepare_data_for_estimator(
-    df: pd.DataFrame, target: str
-) -> Tuple[npt.ArrayLike, npt.ArrayLike]:
-    return df.drop(columns=[target]).values, df[target].values
+    df: pd.DataFrame
+) -> Tuple[np.ndarray, np.ndarray]:
+    return df.drop(columns=[utils.constants.TARGET_COLUMN_NAME]).values, df[utils.constants.TARGET_COLUMN_NAME].values
 
 
 def save_scores(scores_dfs: dict[str, pd.DataFrame], path: Path) -> None:
@@ -66,3 +67,14 @@ def save_scores(scores_dfs: dict[str, pd.DataFrame], path: Path) -> None:
             df.to_csv(path / f"{name}.csv")
         else:
             df.to_csv(path / f"{name}.csv", mode="a", header=False)
+
+
+def stratified_fold_generator(
+    df: pd.DataFrame, n_folds: int = 5
+) -> Tuple[List[pd.DataFrame], List[pd.DataFrame]]:
+    from sklearn.model_selection import StratifiedKFold
+
+    skf = StratifiedKFold(n_splits=n_folds, shuffle=True)
+    x, y = prepare_data_for_estimator(df)
+    for n, train_index, test_index in enumerate(skf.split(x, y)):
+        yield n, df.iloc[train_index], df.iloc[test_index]
