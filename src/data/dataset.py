@@ -5,16 +5,15 @@ from typing import Tuple
 
 import pandas as pd
 
-import utils
 from src.logger import get_console_logger
 
 LOGGER = get_console_logger(logger_name=__name__)
 
 
 def load_time_series_with_describe_features(
-    dirname: str | Path, chunk_size: int = 5,
+    dirname: str | Path,
+    chunk_size: int = 5,
 ) -> pd.DataFrame:
-
     def _process_file(file_path: str):
         df = pd.read_parquet(file_path)
         df.drop("step", axis=1, inplace=True)

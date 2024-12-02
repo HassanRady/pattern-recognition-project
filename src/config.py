@@ -17,7 +17,8 @@ class AutoencoderHPOConfig(BaseModel):
     study_name: Optional[str] = "hpo_study"
     n_trials: Optional[int] = 1
     hpo_path: Path
-    dataset_path: Path
+    train_dataset_path: Path
+    test_dataset_path: Path
     save_data_path: Path
 
 
@@ -37,8 +38,8 @@ class PipelineConfig(BaseModel):
     estimators: list[EstimatorsPipeline]
     hpo_study_name: str
     tabular_dataset_path: Path
+    encoded_dataset_path: Path
     artifacts_path: Path
-
 
 
 def _load_config(path: Union[str, Path]) -> dict:

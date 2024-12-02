@@ -1,11 +1,9 @@
-import argparse
 from pathlib import Path
 from typing import List, Tuple, Optional
 
 import numpy as np
 from sklearn.feature_selection import RFECV
 from sklearn.metrics import make_scorer
-from sklearn.pipeline import Pipeline
 
 from src.evaluator import evaluate
 from src.data.data_manager import save_model
@@ -13,13 +11,9 @@ from src.data.data_manager import save_model
 import pandas as pd
 
 from src.logger import get_console_logger
-from src.data.data_manager import read_csv
 import src.utils as utils
 from src.utils.registry import (
-    get_estimator_importance_attribute,
     RegressionEstimator,
-    sklearn_regression_estimators_registry,
-    sklearn_scaler_registry,
 )
 
 LOGGER = get_console_logger(logger_name=__name__)
@@ -64,6 +58,7 @@ def get_features(
     if estimator_save_path:
         save_model(rfecv.estimator_, estimator_save_path)
     return best_selected_features, best_score
+
 
 if __name__ == "__main__":
     pass

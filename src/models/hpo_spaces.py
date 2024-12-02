@@ -70,7 +70,6 @@ def scaler_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
 
 
 def svm_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
-
     return {
         **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
@@ -140,6 +139,7 @@ def ridge_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "alpha": trial.suggest_float("alpha", 1e-4, 1e4, log=True),
     }
@@ -173,6 +173,7 @@ def lasso_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "alpha": trial.suggest_float("alpha", 1e-4, 1e4, log=True),
     }

@@ -1,6 +1,6 @@
 from functools import partial
 from pathlib import Path
-from typing import List, Any, Optional, Callable
+from typing import List, Any, Optional, Callable, Tuple
 
 import optuna
 import pandas as pd
@@ -80,14 +80,16 @@ class AutoEncoder(pl.LightningModule):
 
 
 def autoencode(
-    df: pd.DataFrame,
+    train_df: pd.DataFrame,
+    test_df: pd.DataFrame,
     epochs: int,
     batch_size: int,
     scaler: type[ScalerType],
     save_path: Optional[Path] = None,
     **kwargs: Any,
-) -> pd.DataFrame:
-    data_scaled = scaler().fit_transform(df)
+) -> Tuple[pd.DataFrame, AutoEncoder]:
+    scaler = scaler()
+    data_scaled = scaler.fit_transform(train_df)
 
     data_tensor = torch.FloatTensor(data_scaled)
     input_dim = data_tensor.shape[1]
@@ -109,16 +111,27 @@ def autoencode(
     trainer.fit(autoencoder, train_dataloaders=data_loader)
 
     with torch.no_grad():
-        encoded_data = autoencoder.encoder(data_tensor).numpy()
+        train_encoded_data = autoencoder.encoder(data_tensor).numpy()
+        test_encoded_data = autoencoder.encoder(
+            torch.FloatTensor(scaler.transform(test_df))
+        ).numpy()
 
-    df_encoded = pd.DataFrame(
-        encoded_data, columns=[f"encoded_{i + 1}" for i in range(encoded_data.shape[1])]
+    train_encoded_df = pd.DataFrame(
+        train_encoded_data,
+        columns=[f"encoded_{i + 1}" for i in range(train_encoded_data.shape[1])],
     )
+    train_encoded_df.index = train_df.index
+    test_encoded_df = pd.DataFrame(
+        test_encoded_data,
+        columns=[f"encoded_{i + 1}" for i in range(test_encoded_data.shape[1])],
+    )
+    test_encoded_df.index = test_df.index
 
     if save_path:
-        save_csv(df_encoded, save_path / "encoded.csv")
+        save_csv(train_encoded_df, save_path / "train_encoded.csv")
+        save_csv(test_encoded_df, save_path / "test_encoded.csv")
 
-    return df_encoded
+    return train_encoded_df, autoencoder
 
 
 def hpo_objective(
@@ -186,14 +199,15 @@ def hpo_objective(
 
 def run_hpo_pipeline(
     config: AutoencoderHPOConfig,
-    df: pd.DataFrame,
+    train_df: pd.DataFrame,
+    test_df: pd.DataFrame,
 ):
     _, best_params, _, _ = run_hpo(
         n_trials=config.n_trials,
         hpo_path=config.hpo_path / "autoencoder",
         study_name=config.study_name,
         objective=hpo_objective(
-            df=df,
+            df=train_df,
             hpo_space=autoencoder_hpo_space,
         ),
         n_jobs=1,
@@ -203,8 +217,9 @@ def run_hpo_pipeline(
     for layer in range(best_params.pop("n_layers")):
         hidden_dims.append(best_params.pop(f"n_units_l{layer}"))
 
-    autoencode(
-        df=df,
+    _, model = autoencode(
+        train_df=train_df,
+        test_df=test_df,
         scaler=sklearn_scaler_registry[best_params.pop("scaler")],
         epochs=best_params.pop("epochs"),
         batch_size=best_params.pop("batch_size"),
@@ -219,10 +234,14 @@ if __name__ == "__main__":
     args = parse_config_path_args()
     config = init_autoencoder_hpo_config(args.config_path)
 
-    df = load_time_series_with_describe_features(config.dataset_path)
-    index = df.pop("id")
+    train_df = load_time_series_with_describe_features(config.train_dataset_path)
+    index = train_df.pop("id")
+
+    test_df = load_time_series_with_describe_features(config.test_dataset_path)
+    test_index = test_df.pop("id")
 
     run_hpo_pipeline(
         config=config,
-        df=df,
+        train_df=train_df,
+        test_df=test_df,
     )

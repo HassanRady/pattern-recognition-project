@@ -6,7 +6,6 @@ import optuna
 import pandas as pd
 
 import utils.constants
-from data.data_manager import prepare_data_for_estimator
 from evaluator import evaluate
 from src.logger import (
     get_console_logger,

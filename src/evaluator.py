@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 from sklearn import metrics
-from torch.ao.nn.quantized.functional import threshold
 
 from src import utils
 
@@ -26,7 +25,6 @@ def optimize_thresholds(
     y_pred,
     initial_thresholds=np.array([0.5, 1.5, 2.5]),
 ):
-
     def _evaluate_predictions(thresholds, scorer, y_true, y_pred):
         y_pred = threshold_rounder(y_pred, thresholds)
         return -scorer(y_true, y_pred)

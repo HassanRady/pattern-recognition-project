@@ -1,14 +1,11 @@
 from functools import partial
 from pathlib import Path
-from typing import Callable, Any, Optional, Union
+from typing import Callable, Any
 
-import numpy as np
 import optuna
 import pandas as pd
 from sklearn.pipeline import Pipeline
 
-import utils.constants
-from src.data.data_manager import save_csv, read_csv
 from src.features import rfe
 from src.logger import get_console_logger
 from src.utils.registry import (

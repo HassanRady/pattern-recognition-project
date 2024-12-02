@@ -1,13 +1,32 @@
-
 import pandas as pd
-
-import utils.constants
 
 
 # source: https://www.kaggle.com/code/ichigoe/lb0-494-with-tabnet
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    featuresCols = [
+    season_cols = [col for col in df.columns if "Season" in col]
+    x = df.drop(season_cols, axis=1)
+    x["BMI_Age"] = x["Physical-BMI"] * x["Basic_Demos-Age"]
+    x["Internet_Hours_Age"] = (
+        x["PreInt_EduHx-computerinternet_hoursday"] * x["Basic_Demos-Age"]
+    )
+    x["BMI_Internet_Hours"] = (
+        x["Physical-BMI"] * x["PreInt_EduHx-computerinternet_hoursday"]
+    )
+    x["BFP_BMI"] = x["BIA-BIA_Fat"] / x["BIA-BIA_BMI"]
+    x["FFMI_BFP"] = x["BIA-BIA_FFMI"] / x["BIA-BIA_Fat"]
+    x["FMI_BFP"] = x["BIA-BIA_FMI"] / x["BIA-BIA_Fat"]
+    x["LST_TBW"] = x["BIA-BIA_LST"] / x["BIA-BIA_TBW"]
+    x["BFP_BMR"] = x["BIA-BIA_Fat"] * x["BIA-BIA_BMR"]
+    x["BFP_DEE"] = x["BIA-BIA_Fat"] * x["BIA-BIA_DEE"]
+    x["BMR_Weight"] = x["BIA-BIA_BMR"] / x["Physical-Weight"]
+    x["DEE_Weight"] = x["BIA-BIA_DEE"] / x["Physical-Weight"]
+    x["SMM_Height"] = x["BIA-BIA_SMM"] / x["Physical-Height"]
+    x["Muscle_to_Fat"] = x["BIA-BIA_SMM"] / x["BIA-BIA_FMI"]
+    x["Hydration_Status"] = x["BIA-BIA_TBW"] / x["Physical-Weight"]
+    x["ICW_TBW"] = x["BIA-BIA_ICW"] / x["BIA-BIA_TBW"]
+
+    features_cols = [
         "Basic_Demos-Age",
         "Basic_Demos-Sex",
         "CGAS-CGAS_Score",
@@ -73,26 +92,4 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
         "ICW_TBW",
     ]
 
-    season_cols = [col for col in df.columns if "Season" in col]
-    x = df.drop(season_cols, axis=1)
-    x["BMI_Age"] = x["Physical-BMI"] * x["Basic_Demos-Age"]
-    x["Internet_Hours_Age"] = (
-        x["PreInt_EduHx-computerinternet_hoursday"] * x["Basic_Demos-Age"]
-    )
-    x["BMI_Internet_Hours"] = (
-        x["Physical-BMI"] * x["PreInt_EduHx-computerinternet_hoursday"]
-    )
-    x["BFP_BMI"] = x["BIA-BIA_Fat"] / x["BIA-BIA_BMI"]
-    x["FFMI_BFP"] = x["BIA-BIA_FFMI"] / x["BIA-BIA_Fat"]
-    x["FMI_BFP"] = x["BIA-BIA_FMI"] / x["BIA-BIA_Fat"]
-    x["LST_TBW"] = x["BIA-BIA_LST"] / x["BIA-BIA_TBW"]
-    x["BFP_BMR"] = x["BIA-BIA_Fat"] * x["BIA-BIA_BMR"]
-    x["BFP_DEE"] = x["BIA-BIA_Fat"] * x["BIA-BIA_DEE"]
-    x["BMR_Weight"] = x["BIA-BIA_BMR"] / x["Physical-Weight"]
-    x["DEE_Weight"] = x["BIA-BIA_DEE"] / x["Physical-Weight"]
-    x["SMM_Height"] = x["BIA-BIA_SMM"] / x["Physical-Height"]
-    x["Muscle_to_Fat"] = x["BIA-BIA_SMM"] / x["BIA-BIA_FMI"]
-    x["Hydration_Status"] = x["BIA-BIA_TBW"] / x["Physical-Weight"]
-    x["ICW_TBW"] = x["BIA-BIA_ICW"] / x["BIA-BIA_TBW"]
-
-    return x[featuresCols]
+    return x[features_cols]
