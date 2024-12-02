@@ -77,3 +77,45 @@ def stratified_fold_generator(
     x, y = prepare_data_for_estimator(df)
     for n, train_index, test_index in enumerate(skf.split(x, y)):
         yield n, df.iloc[train_index], df.iloc[test_index]
+
+
+def read_list_from_file(path: Path) -> List[str]:
+    """
+    Reads a list of strings from a file.
+
+    This function reads the content of the specified file, evaluates it as a Python
+    expression, and returns it as a list of strings.
+
+    Parameters:
+        path (Path): The file path to read the list from.
+
+    Returns:
+        List[str]: The list of strings read from the file.
+
+    Notes:
+        - Uses `eval` to parse the content of the file, so ensure the file contains
+          a valid Python list representation.
+    """
+    LOGGER.info(f"Reading list from {path}")
+    with path.open("r") as file:
+        return eval(file.read())
+
+
+def save_list_to_file(x: List[str], path: Path) -> None:
+    """
+    Saves a list of strings to a file.
+
+    This function writes the list of strings to the specified file, ensuring the directory
+    exists before saving.
+
+    Parameters:
+        x (List[str]): The list of strings to save.
+        path (Path): The file path where the list will be saved.
+
+    Notes:
+        - Creates parent directories if they do not exist.
+        - Writes the list as a string representation.
+    """
+    LOGGER.info(f"Saving list to {path}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(str(x))

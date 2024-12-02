@@ -38,7 +38,8 @@ class PipelineConfig(BaseModel):
     estimators: list[EstimatorsPipeline]
     hpo_study_name: str
     tabular_dataset_path: Path
-    encoded_dataset_path: Path
+    train_time_series_encoded_dataset_path: Path
+    test_time_series_encoded_dataset_path: Path
     artifacts_path: Path
 
 

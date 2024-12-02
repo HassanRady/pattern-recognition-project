@@ -1,6 +1,8 @@
 import pandas as pd
 
 from data.data_manager import read_csv
+from features import correlation
+from features.univariate import univariate_feature_selection
 from src.cleaner.data_cleaner import clean_data
 from src.config import init_pipeline_config
 from src.data.data_manager import (
@@ -25,14 +27,31 @@ LOGGER = get_console_logger(logger_name=__name__)
 def main(config):
     LOGGER.info("Start pipeline")
     train_df, test_df = read_tabular_dataset(config.tabular_dataset_path)
+    train_time_series_encoded_df = read_csv(config.train_time_series_encoded_dataset_path)
+    test_time_series_encoded_df = read_csv(config.test_time_series_encoded_dataset_path)
+
     train_df = clean_data(train_df)
-    target_df = train_df[utils.constants.TARGET_COLUMN_NAME]
 
-    x_df = literature.add_features(train_df).iloc[:, -4:]
-    test_df = literature.add_features(test_df).iloc[:, -4:]
-    train_df = pd.merge(x_df, target_df, left_index=True, right_index=True)
+    train_df = literature.add_features(train_df)
+    test_df = literature.add_features(test_df)
 
-    time_series_encoded_df = read_csv(config.encoded_dataset_path)
+    train_df = pd.merge(train_df, train_time_series_encoded_df, left_index=True, right_index=True)
+    test_df = pd.merge(test_df, test_time_series_encoded_df, left_index=True, right_index=True)
+
+    selected_features = univariate_feature_selection(
+        df=train_df.fillna(train_df.mean()).drop(columns=[utils.constants.TARGET_COLUMN_NAME]),
+        target=train_df[utils.constants.TARGET_COLUMN_NAME],
+        save_path=config.artifacts_path / "univariate_selected_features.txt",
+    )
+    train_df = subset_of_features(train_df, selected_features)
+    test_df = subset_of_features(test_df, selected_features)
+
+    selected_features = correlation.filter_features_by_threshold(
+        df=train_df,
+        threshold=config.correlation_threshold,
+    )
+    train_df = subset_of_features(train_df, selected_features)
+    test_df = subset_of_features(test_df, selected_features)
 
     val_scores_dfs = []
     for estimator_config in config.estimators:
@@ -52,13 +71,11 @@ def main(config):
         )
 
         val_scores_dfs.append(
-            pd.DataFrame([best_score], columns=[estimator_config.name])
+            pd.DataFrame([best_score], columns=[estimator_config.name], index=[utils.constants.KAPPA_COLUMN_NAME])
         )
+
         rfe_selected_features = user_attrs[utils.constants.FEATURES_COLUMN_NAME]
-        x_train_df_for_estimator = subset_of_features(train_df, rfe_selected_features)
-        train_df_for_estimator = pd.merge(
-            x_train_df_for_estimator, target_df, left_index=True, right_index=True
-        )
+        train_df_for_estimator = subset_of_features(train_df, rfe_selected_features)
         x_test_df_for_estimator = subset_of_features(test_df, rfe_selected_features)
 
         estimator_path = estimator_path / f"hpo_trial_{best_trial_number}"
@@ -75,7 +92,6 @@ def main(config):
         train_scores_df[utils.constants.FEATURES_COLUMN_NAME] = str(
             rfe_selected_features
         )
-
         save_scores(
             {
                 "train": train_scores_df,
@@ -92,6 +108,7 @@ def main(config):
             / estimator_config.name
             / "submission.csv",
         )
+
     val_score_df = pd.concat(val_scores_dfs, axis=1)
     save_csv(
         val_score_df,

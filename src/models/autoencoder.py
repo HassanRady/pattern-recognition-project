@@ -88,6 +88,8 @@ def autoencode(
     save_path: Optional[Path] = None,
     **kwargs: Any,
 ) -> Tuple[pd.DataFrame, AutoEncoder]:
+    train_index = train_df.pop("id")
+    test_index = test_df.pop("id")
     scaler = scaler()
     data_scaled = scaler.fit_transform(train_df)
 
@@ -120,12 +122,12 @@ def autoencode(
         train_encoded_data,
         columns=[f"encoded_{i + 1}" for i in range(train_encoded_data.shape[1])],
     )
-    train_encoded_df.index = train_df.index
+    train_encoded_df.index = train_index
     test_encoded_df = pd.DataFrame(
         test_encoded_data,
         columns=[f"encoded_{i + 1}" for i in range(test_encoded_data.shape[1])],
     )
-    test_encoded_df.index = test_df.index
+    test_encoded_df.index = test_index
 
     if save_path:
         save_csv(train_encoded_df, save_path / "train_encoded.csv")
@@ -207,7 +209,7 @@ def run_hpo_pipeline(
         hpo_path=config.hpo_path / "autoencoder",
         study_name=config.study_name,
         objective=hpo_objective(
-            df=train_df,
+            df=train_df.drop(columns=["id"]),
             hpo_space=autoencoder_hpo_space,
         ),
         n_jobs=1,
@@ -235,10 +237,8 @@ if __name__ == "__main__":
     config = init_autoencoder_hpo_config(args.config_path)
 
     train_df = load_time_series_with_describe_features(config.train_dataset_path)
-    index = train_df.pop("id")
 
     test_df = load_time_series_with_describe_features(config.test_dataset_path)
-    test_index = test_df.pop("id")
 
     run_hpo_pipeline(
         config=config,

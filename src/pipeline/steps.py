@@ -1,3 +1,4 @@
+import copy
 from functools import partial
 from pathlib import Path
 from typing import Callable, Any
@@ -12,13 +13,17 @@ from src.utils.registry import (
     RegressionEstimator,
     get_estimator_importance_attribute,
 )
+from src import utils
 
 LOGGER = get_console_logger(logger_name=__name__)
 
 
 def subset_of_features(df: pd.DataFrame, features: list[str]) -> pd.DataFrame:
     df = df.copy()
+    features = copy.deepcopy(features)
     LOGGER.info(f"Subsetting features: {len(features)} from {len(df.columns)}")
+    if utils.constants.TARGET_COLUMN_NAME in df.columns:
+        features.append(utils.constants.TARGET_COLUMN_NAME)
     return df[features]
 
 

@@ -58,7 +58,3 @@ def get_features(
     if estimator_save_path:
         save_model(rfecv.estimator_, estimator_save_path)
     return best_selected_features, best_score
-
-
-if __name__ == "__main__":
-    pass

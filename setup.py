@@ -17,6 +17,7 @@ required_packages = [
     "catboost",
     "lightgbm",
     "scipy",
+    "tsfresh"
 ]
 dev_required_packages = [
     "mypy",
