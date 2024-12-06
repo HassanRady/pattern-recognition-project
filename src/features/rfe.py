@@ -20,7 +20,7 @@ LOGGER = get_console_logger(logger_name=__name__)
 
 
 def kappa_scorer(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    return -evaluate(y_true, y_pred)[utils.constants.KAPPA_COLUMN_NAME]
+    return evaluate(y_true, y_pred)[utils.constants.KAPPA_COLUMN_NAME]
 
 
 def get_features(
@@ -37,7 +37,7 @@ def get_features(
     rfecv = RFECV(
         estimator=estimator,
         importance_getter=importance_getter,
-        scoring=make_scorer(kappa_scorer),
+        scoring=make_scorer(kappa_scorer, greater_is_better=True),
         min_features_to_select=1,
         step=1,
         verbose=verbose,
