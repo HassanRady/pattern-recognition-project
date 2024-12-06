@@ -5,12 +5,12 @@ import numpy as np
 import optuna
 import pandas as pd
 
-import utils.constants
-from evaluator import evaluate
+from src import utils
+from src.evaluator import evaluate
 from src.logger import (
     get_console_logger,
 )
-from utils.registry import RegressionEstimator
+from src.utils.registry import RegressionEstimator
 
 LOGGER = get_console_logger(logger_name=__name__)
 

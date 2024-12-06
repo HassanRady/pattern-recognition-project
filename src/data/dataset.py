@@ -1,7 +1,7 @@
 import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Union
 
 import pandas as pd
 
@@ -11,7 +11,7 @@ LOGGER = get_console_logger(logger_name=__name__)
 
 
 def load_time_series_with_describe_features(
-    dirname: str | Path,
+    dirname: Union[str, Path],
     chunk_size: int = 10,
 ) -> pd.DataFrame:
     def _process_file(file_path: str):

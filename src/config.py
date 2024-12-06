@@ -4,7 +4,7 @@ from typing import Optional, Union
 import yaml
 from pydantic import BaseModel, ConfigDict
 
-from logger import get_console_logger
+from src.logger import get_console_logger
 
 LOGGER = get_console_logger(logger_name=__name__)
 

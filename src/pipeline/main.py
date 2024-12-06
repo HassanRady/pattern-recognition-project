@@ -1,9 +1,9 @@
 import pandas as pd
 
-from data.data_manager import read_csv
-from features import correlation
-from features.univariate import univariate_feature_selection
-from src.cleaner.data_cleaner import clean_data
+from src.data.data_manager import read_csv
+from src.features import correlation
+from src.features.univariate import univariate_feature_selection
+from src.data.data_cleaner import clean_data
 from src.config import init_pipeline_config
 from src.data.data_manager import (
     prepare_data_for_estimator,

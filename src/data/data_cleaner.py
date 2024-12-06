@@ -1,7 +1,6 @@
-import numpy as np
 import pandas as pd
 
-import utils
+from src import utils
 
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:

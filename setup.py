@@ -17,7 +17,9 @@ required_packages = [
     "catboost",
     "lightgbm",
     "scipy",
-    "tsfresh"
+    "tsfresh",
+    *torch_required_packages,
+    *lightning_required_packages,
 ]
 dev_required_packages = [
     "mypy",
@@ -27,8 +29,6 @@ dev_required_packages = [
 
 extras_require = {
     "dev": dev_required_packages,
-    "torch": torch_required_packages,
-    "lightning": lightning_required_packages,
 }
 
 setup(

@@ -209,6 +209,7 @@ def elastic_net_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "alpha": trial.suggest_float("alpha", 1e-4, 1e4, log=True),
         "l1_ratio": trial.suggest_float("l1_ratio", 0, 1),
@@ -251,6 +252,7 @@ def xgb_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "n_jobs": trial.suggest_categorical("n_jobs", [-1]),
         "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
@@ -294,6 +296,7 @@ def random_forest_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "n_jobs": trial.suggest_categorical("n_jobs", [-1]),
         "max_depth": trial.suggest_int("max_depth", 10, 100),
@@ -345,6 +348,7 @@ def mlp_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         for i in range(n_layers)
     ]
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "activation": trial.suggest_categorical(
             "activation", ["identity", "logistic", "tanh", "relu"]
@@ -401,6 +405,7 @@ def lightgbm_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "n_jobs": trial.suggest_categorical("n_jobs", [-1]),
         "verbose": trial.suggest_categorical("verbose", [-1]),
@@ -445,6 +450,7 @@ def knn_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "n_jobs": trial.suggest_categorical("n_jobs", [-1]),
         "n_neighbors": trial.suggest_int("n_neighbors", 1, 200),
@@ -486,6 +492,7 @@ def gradient_boost_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "n_estimators": trial.suggest_int("n_estimators", 50, 500),
         "max_depth": trial.suggest_int("max_depth", 3, 10),
@@ -526,6 +533,7 @@ def decision_tree_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "max_depth": trial.suggest_int("max_depth", 1, 42),
         "min_samples_split": trial.suggest_int("min_samples_split", 2, 42),
@@ -571,6 +579,7 @@ def catboost_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
+        **imputer_hpo_space(trial),
         **scaler_hpo_space(trial),
         "iterations": trial.suggest_int("iterations", 100, 1000),
         "depth": trial.suggest_int("depth", 4, 10),

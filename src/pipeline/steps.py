@@ -96,7 +96,7 @@ def rfecv_train_hpo_objective(
             estimator=pipe,
             importance_getter=importance_getter,
             estimator_save_path=estimator_save_path / f"hpo_trial_{trial.number}",
-            verbose=1,
+            verbose=0,
         )
         trial.set_user_attr("features", features)
         return abs(score)

@@ -5,7 +5,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
-import utils.constants
+from src import utils
 from src.logger import get_console_logger
 
 LOGGER = get_console_logger(logger_name=__name__)

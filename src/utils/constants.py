@@ -30,4 +30,5 @@ FEATURES_TO_DROP = [
     "PCIAT-PCIAT_14",
     "PCIAT-PCIAT_11",
     "PCIAT-PCIAT_12",
+    "PCIAT-Season",
 ]
