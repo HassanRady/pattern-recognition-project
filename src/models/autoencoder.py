@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader, TensorDataset, random_split
 from src.models.core import run_hpo
 from src.models.hpo_spaces import autoencoder_hpo_space
 from src.utils.args import parse_config_path_args
-from src.utils.registry import (
+from models.registry import (
     sklearn_scaler_registry,
     activation_layer_registry,
     ActivationLayerType,

@@ -73,14 +73,15 @@ sklearn_scaler_registry = {
 }
 
 
-class SklearnImputers(Enum):
+class ImputersAndInterplations(Enum):
     KNN = "KNNImputer"
     MEAN = "SimpleImputer"
+    INTERPOLATION = "InterpolationTransformer"
 
 
 sklearn_imputer_registry = {
-    SklearnImputers.KNN.value: KNNImputer,
-    SklearnImputers.MEAN.value: SimpleImputer,
+    ImputersAndInterplations.KNN.value: KNNImputer,
+    ImputersAndInterplations.MEAN.value: SimpleImputer,
 }
 
 

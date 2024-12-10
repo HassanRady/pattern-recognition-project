@@ -3,34 +3,43 @@ from typing import Any
 import optuna
 from sklearn.impute import SimpleImputer, KNNImputer
 
-from src.utils.registry import (
+from data.interpolations import InterpolationTransformer
+from models.registry import (
     sklearn_scaler_registry,
     SklearnScalers,
     ActivationLayers,
     activation_layer_registry,
-    SklearnImputers,
+    ImputersAndInterplations,
 )
 
 
 def imputer_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
-    imputer_type = trial.suggest_categorical(
-        "imputer_type", [imputer.value for imputer in SklearnImputers]
+    imputer_or_interpolation_type = trial.suggest_categorical(
+        "imputer_or_interpolation",
+        [
+            imputer_or_interpolation.value
+            for imputer_or_interpolation in ImputersAndInterplations
+        ],
     )
 
-    if imputer_type == "SimpleImputer":
+    if imputer_or_interpolation_type == "SimpleImputer":
         imputer_strategy = trial.suggest_categorical(
             "imputer_strategy", ["mean", "median", "most_frequent"]
         )
+        imputer_or_interpolation_type = SimpleImputer(strategy=imputer_strategy)
 
-        imputer = SimpleImputer(strategy=imputer_strategy)
-
-    elif imputer_type == "KNNImputer":
+    elif imputer_or_interpolation_type == "KNNImputer":
         n_neighbors = trial.suggest_int("n_neighbors", 2, 20)
         weights = trial.suggest_categorical("weights", ["uniform", "distance"])
-        imputer = KNNImputer(n_neighbors=n_neighbors, weights=weights)
+        imputer_or_interpolation_type = KNNImputer(
+            n_neighbors=n_neighbors, weights=weights
+        )
+    elif imputer_or_interpolation_type == "InterpolationTransformer":
+        method = trial.suggest_categorical("method", ["linear", "quadratic", "cubic", "nearest", "pchip", "akima"])
+        imputer_or_interpolation_type = InterpolationTransformer(method=method)
 
     return {
-        "imputer": imputer,
+        "imputer_or_interpolation": imputer_or_interpolation_type,
     }
 
 

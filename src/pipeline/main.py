@@ -17,7 +17,7 @@ from src.models.core import run_hpo, score_estimator, predict
 from src.models.hpo_spaces import estimators_hpo_space_mapping
 from src.pipeline.steps import rfecv_train_hpo_objective, subset_of_features
 from src.utils.args import parse_config_path_args
-from src.utils.registry import sklearn_regression_estimators_registry
+from models.registry import sklearn_regression_estimators_registry
 from src import utils
 from src.features import literature
 

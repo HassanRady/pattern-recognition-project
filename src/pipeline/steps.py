@@ -9,7 +9,7 @@ from sklearn.pipeline import Pipeline
 
 from src.features import rfe
 from src.logger import get_console_logger
-from src.utils.registry import (
+from models.registry import (
     RegressionEstimator,
     get_estimator_importance_attribute,
 )

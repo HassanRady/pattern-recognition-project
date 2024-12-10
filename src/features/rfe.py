@@ -12,7 +12,7 @@ import pandas as pd
 
 from src.logger import get_console_logger
 import src.utils as utils
-from src.utils.registry import (
+from models.registry import (
     RegressionEstimator,
 )
 
