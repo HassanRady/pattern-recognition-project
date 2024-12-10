@@ -3,8 +3,8 @@ from typing import Any
 import optuna
 from sklearn.impute import SimpleImputer, KNNImputer
 
-from data.interpolations import InterpolationTransformer
-from models.registry import (
+from src.data.interpolations import InterpolationTransformer
+from src.models.registry import (
     sklearn_scaler_registry,
     SklearnScalers,
     ActivationLayers,
@@ -13,7 +13,7 @@ from models.registry import (
 )
 
 
-def imputer_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
+def imputer_or_interpolation_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     imputer_or_interpolation_type = trial.suggest_categorical(
         "imputer_or_interpolation",
         [
@@ -35,7 +35,7 @@ def imputer_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
             n_neighbors=n_neighbors, weights=weights
         )
     elif imputer_or_interpolation_type == "InterpolationTransformer":
-        method = trial.suggest_categorical("method", ["linear", "quadratic", "cubic", "nearest", "pchip", "akima"])
+        method = trial.suggest_categorical("method", ["linear", "nearest", "pchip", ])
         imputer_or_interpolation_type = InterpolationTransformer(method=method)
 
     return {
@@ -80,7 +80,7 @@ def scaler_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
 
 def svm_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "C": trial.suggest_float("C", 1e-3, 1e3, log=True),
         "epsilon": trial.suggest_float("epsilon", 1e-3, 1e1, log=True),
@@ -115,7 +115,7 @@ def linear_regression_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
     }
 
@@ -148,7 +148,7 @@ def ridge_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "alpha": trial.suggest_float("alpha", 1e-4, 1e4, log=True),
     }
@@ -182,7 +182,7 @@ def lasso_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "alpha": trial.suggest_float("alpha", 1e-4, 1e4, log=True),
     }
@@ -218,7 +218,7 @@ def elastic_net_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "alpha": trial.suggest_float("alpha", 1e-4, 1e4, log=True),
         "l1_ratio": trial.suggest_float("l1_ratio", 0, 1),
@@ -261,7 +261,7 @@ def xgb_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "n_jobs": trial.suggest_categorical("n_jobs", [-1]),
         "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
@@ -305,7 +305,7 @@ def random_forest_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "n_jobs": trial.suggest_categorical("n_jobs", [-1]),
         "max_depth": trial.suggest_int("max_depth", 10, 100),
@@ -357,7 +357,7 @@ def mlp_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         for i in range(n_layers)
     ]
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "activation": trial.suggest_categorical(
             "activation", ["identity", "logistic", "tanh", "relu"]
@@ -414,7 +414,7 @@ def lightgbm_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "n_jobs": trial.suggest_categorical("n_jobs", [-1]),
         "verbose": trial.suggest_categorical("verbose", [-1]),
@@ -459,7 +459,7 @@ def knn_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "n_jobs": trial.suggest_categorical("n_jobs", [-1]),
         "n_neighbors": trial.suggest_int("n_neighbors", 1, 200),
@@ -501,7 +501,7 @@ def gradient_boost_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "n_estimators": trial.suggest_int("n_estimators", 50, 500),
         "max_depth": trial.suggest_int("max_depth", 3, 10),
@@ -542,7 +542,7 @@ def decision_tree_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "max_depth": trial.suggest_int("max_depth", 1, 42),
         "min_samples_split": trial.suggest_int("min_samples_split", 2, 42),
@@ -588,7 +588,7 @@ def catboost_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
     """
     return {
-        **imputer_hpo_space(trial),
+        **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
         "iterations": trial.suggest_int("iterations", 100, 1000),
         "depth": trial.suggest_int("depth", 4, 10),

@@ -9,7 +9,7 @@ from sklearn.pipeline import Pipeline
 
 from src.features import rfe
 from src.logger import get_console_logger
-from models.registry import (
+from src.models.registry import (
     RegressionEstimator,
     get_estimator_importance_attribute,
 )
@@ -74,7 +74,7 @@ def rfecv_train_hpo_objective(
         The inner function defining the logic of the objective function for a single Optuna trial.
         """
         params = hpo_space(trial)
-        imputer = params.pop("imputer")
+        imputer_or_interpolation = params.pop("imputer_or_interpolation")
         scaler = params.pop("scaler")
 
         importance_getter = (
@@ -83,7 +83,7 @@ def rfecv_train_hpo_objective(
 
         pipe = Pipeline(
             [
-                ("imputer", imputer),
+                ("imputer_or_interpolation", imputer_or_interpolation),
                 ("scaler", scaler()),
                 (
                     "estimator",

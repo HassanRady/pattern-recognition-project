@@ -10,7 +10,7 @@ from src.evaluator import evaluate
 from src.logger import (
     get_console_logger,
 )
-from models.registry import RegressionEstimator
+from src.models.registry import RegressionEstimator
 
 LOGGER = get_console_logger(logger_name=__name__)
 

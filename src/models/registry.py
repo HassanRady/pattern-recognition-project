@@ -79,12 +79,6 @@ class ImputersAndInterplations(Enum):
     INTERPOLATION = "InterpolationTransformer"
 
 
-sklearn_imputer_registry = {
-    ImputersAndInterplations.KNN.value: KNNImputer,
-    ImputersAndInterplations.MEAN.value: SimpleImputer,
-}
-
-
 RegressionEstimator = Union[
     SVR,
     LinearRegression,

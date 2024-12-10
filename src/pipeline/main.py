@@ -17,7 +17,7 @@ from src.models.core import run_hpo, score_estimator, predict
 from src.models.hpo_spaces import estimators_hpo_space_mapping
 from src.pipeline.steps import rfecv_train_hpo_objective, subset_of_features
 from src.utils.args import parse_config_path_args
-from models.registry import sklearn_regression_estimators_registry
+from src.models.registry import sklearn_regression_estimators_registry
 from src import utils
 from src.features import literature
 
@@ -53,7 +53,6 @@ def main(config):
     train_df = subset_of_features(train_df, selected_features)
     test_df = subset_of_features(test_df, selected_features)
 
-    val_scores_dfs = []
     for estimator_config in config.estimators:
         LOGGER.info(f"Start HPO for estimator: {estimator_config.name}")
         estimator = sklearn_regression_estimators_registry[estimator_config.name]
@@ -70,9 +69,8 @@ def main(config):
             ),
         )
 
-        val_scores_dfs.append(
-            pd.DataFrame([best_score], columns=[estimator_config.name], index=[utils.constants.KAPPA_COLUMN_NAME])
-        )
+        val_scores_df = pd.DataFrame(data={utils.constants.KAPPA_COLUMN_NAME: [best_score],
+                                           utils.constants.ESTIMATOR_COLUMN_NAME: [estimator_config.name],})
 
         rfe_selected_features = user_attrs[utils.constants.FEATURES_COLUMN_NAME]
         train_df_for_estimator = subset_of_features(train_df, rfe_selected_features)
@@ -95,6 +93,7 @@ def main(config):
         save_scores(
             {
                 "train": train_scores_df,
+                "val": val_scores_df,
             },
             config.artifacts_path / "scores",
         )
@@ -109,11 +108,6 @@ def main(config):
             / "submission.csv",
         )
 
-    val_score_df = pd.concat(val_scores_dfs, axis=1)
-    save_csv(
-        val_score_df,
-        config.artifacts_path / "scores" / "val.csv",
-    )
 
 
 if __name__ == "__main__":
