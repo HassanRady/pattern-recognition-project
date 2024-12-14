@@ -1,10 +1,7 @@
-import argparse
-from pathlib import Path
 
 import pandas as pd
 from sklearn.feature_selection import mutual_info_regression
 
-from data.data_manager import read_csv
 from features.commons import filter_features
 from src.logger import get_console_logger
 
@@ -73,4 +70,3 @@ def filter_features_by_threshold(
         f"Mutual Information Regression feature selection: {len(features)} from {len(df.columns) - 1}"
     )
     return features
-

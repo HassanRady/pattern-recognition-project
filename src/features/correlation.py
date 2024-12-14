@@ -1,10 +1,9 @@
-import argparse
 from pathlib import Path
 from typing import Optional
 
 import pandas as pd
 
-from src.data.data_manager import read_csv, save_list_to_file, read_list_from_file
+from src.data.data_manager import save_list_to_file, read_list_from_file
 from src.features.commons import filter_features
 from src.logger import get_console_logger
 from src.utils.others import skip_if_exists

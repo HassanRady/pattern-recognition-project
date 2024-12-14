@@ -80,6 +80,7 @@ class ImputersAndInterplations(Enum):
     SIMPLE = "SimpleImputer"
     INTERPOLATION = "InterpolationTransformer"
 
+
 imputers_and_interpolations_registry = {
     ImputersAndInterplations.KNN.value: KNNImputer,
     ImputersAndInterplations.SIMPLE.value: SimpleImputer,

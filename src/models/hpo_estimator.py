@@ -40,7 +40,11 @@ if __name__ == "__main__":
         train_df, train_time_series_encoded_df, left_index=True, right_index=True
     )
     test_df = pd.merge(
-        test_df, test_time_series_encoded_df, how="left", left_index=True, right_index=True
+        test_df,
+        test_time_series_encoded_df,
+        how="left",
+        left_index=True,
+        right_index=True,
     )
 
     for estimator_config in config.estimators:

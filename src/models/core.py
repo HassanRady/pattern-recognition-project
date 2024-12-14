@@ -31,7 +31,6 @@ def train(
     *args: Any,
     **kwargs: Any,
 ) -> pd.DataFrame:
-
     LOGGER.info("Start train")
     train_time_start = time.time()
 
@@ -69,7 +68,6 @@ def train_cv(
     *args: Any,
     **kwargs: Any,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-
     LOGGER.info("Start train")
     train_time_start = time.time()
 
@@ -135,7 +133,6 @@ def train_hpo_objective(
     estimator: type[RegressionEstimator],
     hpo_space: Callable[[optuna.Trial], dict[str, Any]],
 ) -> Callable[[optuna.Trial], float]:
-
     def _train_hpo_objective(
         trial: optuna.Trial,
         df: pd.DataFrame,
@@ -204,7 +201,6 @@ def run_hpo_pipeline(
     n_trials: int,
     estimator_path: Path,
 ):
-
     _, best_params, best_score, _ = run_hpo(
         n_trials=n_trials,
         study_name=hpo_study_name,

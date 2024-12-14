@@ -31,11 +31,16 @@ def imputer_or_interpolation_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     elif imputer_or_interpolation_type == "KNNImputer":
         n_neighbors = trial.suggest_int("n_neighbors", 2, 20)
         weights = trial.suggest_categorical("weights", ["uniform", "distance"])
-        imputer_or_interpolation = KNNImputer(
-            n_neighbors=n_neighbors, weights=weights
-        )
+        imputer_or_interpolation = KNNImputer(n_neighbors=n_neighbors, weights=weights)
     elif imputer_or_interpolation_type == "InterpolationTransformer":
-        method = trial.suggest_categorical("interpolation_method", ["linear", "nearest", "pchip", ])
+        method = trial.suggest_categorical(
+            "interpolation_method",
+            [
+                "linear",
+                "nearest",
+                "pchip",
+            ],
+        )
         imputer_or_interpolation = InterpolationTransformer(method=method)
 
     return {

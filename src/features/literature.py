@@ -34,7 +34,6 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
         mapping = create_mapping(col, _df)
         _df[col] = _df[col].replace(mapping).astype(int)
 
-
     _df["BMI_Age"] = _df["Physical-BMI"] * _df["Basic_Demos-Age"]
     _df["Internet_Hours_Age"] = (
         _df["PreInt_EduHx-computerinternet_hoursday"] * _df["Basic_Demos-Age"]
