@@ -10,15 +10,14 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from tqdm import tqdm
 
-from config import PipelineConfig
-from data.data_manager import prepare_data_for_estimator, save_model, save_scores
+from src.data.data_manager import prepare_data_for_estimator, save_model
 from src import utils
 from src.evaluator import evaluate
 from src.logger import (
     get_console_logger,
 )
 from src.models.registry import RegressionEstimator, parse_sklearn_scaler, ScalerType
-from utils.others import process_hpo_best_space
+from src.utils.others import process_hpo_best_space
 
 LOGGER = get_console_logger(logger_name=__name__)
 
@@ -197,17 +196,19 @@ def run_hpo(
 
 
 def run_hpo_pipeline(
-    config: PipelineConfig,
+    hpo_study_name: str,
+    hpo_path: Path,
     df: pd.DataFrame,
     estimator: type[RegressionEstimator],
     hpo_space: Callable[[optuna.Trial], dict[str, Any]],
     n_trials: int,
+    estimator_path: Path,
 ):
 
     _, best_params, best_score, _ = run_hpo(
         n_trials=n_trials,
-        study_name=config.hpo_study_name,
-        hpo_path=config.artifacts_path / "hpo",
+        study_name=hpo_study_name,
+        hpo_path=hpo_path,
         objective=train_hpo_objective(
             df=df,
             estimator=estimator,
@@ -220,12 +221,16 @@ def run_hpo_pipeline(
     train_scores_df = train(
         df=df,
         estimator=estimator,
-        estimator_path=config.artifacts_path / "estimator",
+        estimator_path=estimator_path,
         **best_params,
     )
     train_scores_df[utils.constants.PARAMS_COLUMN_NAME] = str(best_params)
 
-    val_scores_df = pd.DataFrame(data={utils.constants.KAPPA_COLUMN_NAME: [best_score],
-                                       utils.constants.PARAMS_COLUMN_NAME: str(best_params),})
+    val_scores_df = pd.DataFrame(
+        data={
+            utils.constants.KAPPA_COLUMN_NAME: [best_score],
+            utils.constants.PARAMS_COLUMN_NAME: str(best_params),
+        }
+    )
 
     return train_scores_df, val_scores_df

@@ -49,6 +49,7 @@ def main(config):
     selected_features = correlation.filter_features_by_threshold(
         df=train_df,
         threshold=config.correlation_threshold,
+        save_path=config.artifacts_path / "correlation_selected_features.txt",
     )
     train_df = subset_of_features(train_df, selected_features)
     test_df = subset_of_features(test_df, selected_features)
