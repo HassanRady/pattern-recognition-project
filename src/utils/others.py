@@ -7,8 +7,8 @@ from typing import Callable, Any, Union, Optional, List
 import pandas as pd
 from sklearn.impute import SimpleImputer, KNNImputer
 
-from data.interpolations import InterpolationTransformer
-from models.registry import (
+from src.data.interpolations import InterpolationTransformer
+from src.models.registry import (
     ImputersAndInterplations,
 )
 from src.logger import get_console_logger
