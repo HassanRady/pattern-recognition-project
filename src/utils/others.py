@@ -5,7 +5,11 @@ from pathlib import Path
 from typing import Callable, Any, Union, Optional, List
 
 import pandas as pd
+from sklearn.impute import SimpleImputer, KNNImputer
 
+from data.interpolations import InterpolationTransformer
+from models.hpo_spaces import imputer_or_interpolation_hpo_space
+from models.registry import imputers_and_interpolations_registry, ImputersAndInterplations
 from src.logger import get_console_logger
 
 LOGGER = get_console_logger(logger_name=__name__)
@@ -148,3 +152,21 @@ def skip_if_exists(
         return check
 
     return decorator
+
+
+def process_hpo_best_space(best_space: dict[str, Any]) -> dict[str, Any]:
+    imputer_or_interpolation = best_space.pop("imputer_or_interpolation")
+
+    if imputer_or_interpolation == ImputersAndInterplations.SIMPLE.value:
+        imputer_strategy = best_space.pop("imputer_strategy")
+        best_space["imputer_or_interpolation"] = SimpleImputer(strategy=imputer_strategy)
+    elif imputer_or_interpolation == ImputersAndInterplations.KNN.value:
+        n_neighbors = best_space.pop("n_neighbors")
+        weights = best_space.pop("weights")
+        best_space["imputer_or_interpolation"] = KNNImputer(n_neighbors=n_neighbors, weights=weights)
+    elif imputer_or_interpolation == ImputersAndInterplations.INTERPOLATION.value:
+        interpolation_method = best_space.pop("interpolation_method")
+        best_space["imputer_or_interpolation"] = InterpolationTransformer(method=interpolation_method)
+    else:
+        raise ValueError("Invalid imputer_or_interpolation")
+    return best_space

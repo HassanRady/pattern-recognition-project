@@ -29,6 +29,8 @@ from sklearn.impute import KNNImputer, SimpleImputer
 
 from torch import nn
 
+from src.data.interpolations import InterpolationTransformer
+
 ActivationLayerType = Union[nn.ReLU, nn.Tanh]
 
 
@@ -75,8 +77,14 @@ sklearn_scaler_registry = {
 
 class ImputersAndInterplations(Enum):
     KNN = "KNNImputer"
-    MEAN = "SimpleImputer"
+    SIMPLE = "SimpleImputer"
     INTERPOLATION = "InterpolationTransformer"
+
+imputers_and_interpolations_registry = {
+    ImputersAndInterplations.KNN.value: KNNImputer,
+    ImputersAndInterplations.SIMPLE.value: SimpleImputer,
+    ImputersAndInterplations.INTERPOLATION.value: InterpolationTransformer,
+}
 
 
 RegressionEstimator = Union[

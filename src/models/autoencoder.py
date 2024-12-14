@@ -9,7 +9,8 @@ import torch.nn as nn
 import lightning as pl
 from lightning import Trainer
 
-from src.data.dataset import load_time_series_with_describe_features
+from features import tsfresh_features
+from src.data.dataset import load_time_series, load_time_series_with_describe_features
 from src.config import AutoencoderHPOConfig, init_autoencoder_hpo_config
 from src.data.data_manager import save_csv
 from torch.utils.data import DataLoader, TensorDataset, random_split
