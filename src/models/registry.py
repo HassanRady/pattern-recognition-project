@@ -29,6 +29,7 @@ from sklearn.impute import KNNImputer, SimpleImputer
 
 from torch import nn
 
+from src.models.tabnet import TabNetWrapper
 from src.data.interpolations import InterpolationTransformer
 
 ActivationLayerType = Union[nn.ReLU, nn.Tanh]
@@ -104,6 +105,7 @@ RegressionEstimator = Union[
     CatBoostRegressor,
     Pipeline,
     MLPRegressor,
+TabNetWrapper
 ]
 
 sklearn_regression_estimators_registry = {
@@ -121,6 +123,7 @@ sklearn_regression_estimators_registry = {
     "decision_tree": DecisionTreeRegressor,
     "knn": KNeighborsRegressor,
     "mlp": MLPRegressor,
+    "tabnet": TabNetWrapper,
 }
 
 

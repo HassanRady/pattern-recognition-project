@@ -1,6 +1,7 @@
 from typing import Any
 
 import optuna
+import torch
 from sklearn.impute import SimpleImputer, KNNImputer
 
 from src.data.interpolations import InterpolationTransformer
@@ -623,6 +624,33 @@ def autoencoder_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
 
 
+def tabnet_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
+    return {
+        **imputer_or_interpolation_hpo_space(trial),
+        **scaler_hpo_space(trial),
+        "n_d": trial.suggest_int("n_d", 8, 128, step=8),
+        "n_a": trial.suggest_int("n_a", 8, 128, step=8),
+        "n_steps": trial.suggest_int("n_steps", 3, 10),
+        "gamma": trial.suggest_float("gamma", 1.0, 2.0),
+        "lambda_sparse": trial.suggest_float("lambda_sparse", 1e-5, 1e-3, log=True),
+        "optimizer_fn": torch.optim.Adam,
+        "optimizer_params": {
+            "lr": trial.suggest_float("lr", 1e-4, 1e-2, log=True),
+            "weight_decay": trial.suggest_float("weight_decay", 1e-6, 1e-3, log=True),
+        },
+        "mask_type": trial.suggest_categorical("mask_type", ["sparsemax", "entmax"]),
+        "scheduler_params": {
+            "mode": "min",
+            "patience": 10,
+            "min_lr": 1e-5,
+            "factor": 0.5,
+        },
+        "scheduler_fn": torch.optim.lr_scheduler.ReduceLROnPlateau,
+        "verbose": 1,
+        "device_name": "cuda" if torch.cuda.is_available() else "cpu",
+    }
+
+
 estimators_hpo_space_mapping = {
     "svm": svm_hpo_space,
     "linear_regression": linear_regression_hpo_space,
@@ -637,4 +665,5 @@ estimators_hpo_space_mapping = {
     "decision_tree": decision_tree_hpo_space,
     "knn": knn_hpo_space,
     "mlp": mlp_hpo_space,
+    "tabnet": tabnet_hpo_space,
 }

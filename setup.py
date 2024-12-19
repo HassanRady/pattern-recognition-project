@@ -20,6 +20,7 @@ required_packages = [
     "tsfresh",
     *torch_required_packages,
     *lightning_required_packages,
+    "pytorch-tabnet"
 ]
 dev_required_packages = [
     "mypy",

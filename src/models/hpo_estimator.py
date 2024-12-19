@@ -2,6 +2,7 @@ import os
 
 import pandas as pd
 
+from src.models.tabnet import TabNetWrapper
 from src import utils
 from src.data.data_cleaner import clean_data
 from src.data.dataset import read_tabular_dataset
@@ -71,7 +72,12 @@ if __name__ == "__main__":
             config.artifacts_path / "scores",
         )
 
-        test_preds = predict(load_model(estimator_path), test_df.values)
+        estimator = load_model(estimator_path)
+        # There is an issue with loading TabNet model because of the way it is saved while it is loaded as joblib
+        if estimator_config == "tabnet":
+            estimator = TabNetWrapper().model.load_model(estimator_path)
+
+        test_preds = predict(estimator, test_df.values)
         test_preds.index = test_df.index
         save_csv(
             test_preds,

@@ -205,6 +205,7 @@ def run_hpo_pipeline(
         n_trials=n_trials,
         study_name=hpo_study_name,
         hpo_path=hpo_path,
+        n_jobs=1,
         objective=train_hpo_objective(
             df=df,
             estimator=estimator,
@@ -212,7 +213,7 @@ def run_hpo_pipeline(
         ),
     )
 
-    best_params = process_hpo_best_space(best_params)
+    best_params = process_hpo_best_space(best_params, estimator)
 
     train_scores_df = train(
         df=df,
