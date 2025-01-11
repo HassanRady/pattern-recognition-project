@@ -230,4 +230,4 @@ def run_hpo_pipeline(
         }
     )
 
-    return train_scores_df, val_scores_df
+    return train_scores_df, val_scores_df, best_params
