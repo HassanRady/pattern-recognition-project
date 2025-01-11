@@ -77,11 +77,13 @@ def train_cv(
     train_scores_dfs = []
     val_scores_dfs = []
 
+    n_splits = 4
     SKF = StratifiedKFold(
         shuffle=True,
+        n_splits=n_splits,
     )
     for fold, (train_idx, test_idx) in enumerate(
-        tqdm(SKF.split(x, y), desc="Training Folds", total=5)
+        tqdm(SKF.split(x, y), desc="Training Folds", total=n_splits)
     ):
         x_train, x_val = x.iloc[train_idx], x.iloc[test_idx]
         y_train, y_val = y.iloc[train_idx], y.iloc[test_idx]

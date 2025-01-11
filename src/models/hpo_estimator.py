@@ -72,10 +72,11 @@ if __name__ == "__main__":
             config.artifacts_path / "scores",
         )
 
-        estimator = load_model(estimator_path)
         # There is an issue with loading TabNet model because of the way it is saved while it is loaded as joblib
         if estimator_config == "tabnet":
-            estimator = TabNetWrapper().model.load_model(estimator_path)
+            estimator = TabNetWrapper()
+        else:
+            estimator = load_model(estimator_path)
 
         test_preds = predict(estimator, test_df.values)
         test_preds.index = test_df.index

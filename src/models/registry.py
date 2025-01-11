@@ -7,6 +7,8 @@ from sklearn.ensemble import (
     RandomForestRegressor,
     AdaBoostRegressor,
     GradientBoostingRegressor,
+    VotingRegressor,
+    StackingRegressor,
 )
 from sklearn.linear_model import Ridge, Lasso, LinearRegression, ElasticNet
 from sklearn.neighbors import KNeighborsRegressor
@@ -105,7 +107,7 @@ RegressionEstimator = Union[
     CatBoostRegressor,
     Pipeline,
     MLPRegressor,
-TabNetWrapper
+    TabNetWrapper,
 ]
 
 sklearn_regression_estimators_registry = {
@@ -124,6 +126,8 @@ sklearn_regression_estimators_registry = {
     "knn": KNeighborsRegressor,
     "mlp": MLPRegressor,
     "tabnet": TabNetWrapper,
+    "voting": VotingRegressor,
+    "stacking": StackingRegressor,
 }
 
 

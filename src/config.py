@@ -43,6 +43,27 @@ class PipelineConfig(BaseModel):
     artifacts_path: Path
 
 
+class EnsembleEstimators(BaseModel):
+    """Configuration for the pipeline of estimators"""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    name: str
+    estimators: list[EstimatorsPipeline]
+    hpo_trials: int
+
+
+class EnsembleConfig(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
+    ensemble_estimators: list[EnsembleEstimators]
+    hpo_study_name: str
+    tabular_dataset_path: Path
+    train_time_series_encoded_dataset_path: Path
+    test_time_series_encoded_dataset_path: Path
+    artifacts_path: Path
+
+
 def _load_config(path: Union[str, Path]) -> dict:
     """
     Loads configuration settings from a YAML file.
@@ -67,3 +88,7 @@ def init_autoencoder_hpo_config(path: Union[str, Path]) -> AutoencoderHPOConfig:
 
 def init_pipeline_config(path: Union[str, Path]) -> PipelineConfig:
     return PipelineConfig(**_load_config(path))
+
+
+def init_ensemble_config(path: Union[str, Path]) -> EnsembleConfig:
+    return EnsembleConfig(**_load_config(path))

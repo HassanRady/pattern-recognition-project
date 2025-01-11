@@ -9,7 +9,8 @@ from sklearn.impute import SimpleImputer, KNNImputer
 
 from src.data.interpolations import InterpolationTransformer
 from src.models.registry import (
-    ImputersAndInterplations, RegressionEstimator,
+    ImputersAndInterplations,
+    RegressionEstimator,
 )
 from src.logger import get_console_logger
 
@@ -155,7 +156,9 @@ def skip_if_exists(
     return decorator
 
 
-def process_hpo_best_space(best_space: dict[str, Any], estimator: type[RegressionEstimator]) -> dict[str, Any]:
+def process_hpo_best_space(
+    best_space: dict[str, Any], estimator: type[RegressionEstimator]
+) -> dict[str, Any]:
     imputer_or_interpolation = best_space.pop("imputer_or_interpolation")
 
     if imputer_or_interpolation == ImputersAndInterplations.SIMPLE.value:

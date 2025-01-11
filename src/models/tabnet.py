@@ -1,12 +1,8 @@
 from copy import deepcopy
-from pathlib import Path
-
 from pytorch_tabnet.tab_model import TabNetRegressor
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.model_selection import train_test_split
-from pytorch_tabnet.callbacks import Callback
 import os
-import torch
 from pytorch_tabnet.callbacks import Callback
 
 
@@ -14,11 +10,13 @@ class TabNetWrapper(BaseEstimator, RegressorMixin):
     def __init__(self, **kwargs):
         self.model = TabNetRegressor(**kwargs)
         self.kwargs = kwargs
-
         self.best_model_path = "best_tabnet_model.pt"
 
-    def fit(self, X, y):
+        if os.path.exists(self.best_model_path):
+            self.model.load_model(self.best_model_path)
+            os.remove(self.best_model_path)
 
+    def fit(self, X, y):
         if hasattr(y, "values"):
             y = y.values
 
@@ -44,7 +42,7 @@ class TabNetWrapper(BaseEstimator, RegressorMixin):
                     monitor="valid_mse",
                     mode="min",
                     save_best_only=True,
-                    verbose=True,
+                    verbose=1,
                 )
             ],
         )
@@ -74,16 +72,17 @@ class TabNetPretrainedModelCheckpoint(Callback):
     def __init__(
         self, filepath, monitor="val_loss", mode="min", save_best_only=True, verbose=1
     ):
-        super().__init__()  # Initialize parent class
+        super().__init__()
         self.filepath = filepath
         self.monitor = monitor
         self.mode = mode
         self.save_best_only = save_best_only
         self.verbose = verbose
         self.best = float("inf") if mode == "min" else -float("inf")
+        self.model_instance = None
 
     def on_train_begin(self, logs=None):
-        self.model = self.trainer  # Use trainer itself as model
+        self.model_instance = self.trainer  # Access trainer model
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
@@ -91,7 +90,6 @@ class TabNetPretrainedModelCheckpoint(Callback):
         if current is None:
             return
 
-        # Check if current metric is better than best
         if (self.mode == "min" and current < self.best) or (
             self.mode == "max" and current > self.best
         ):
@@ -101,4 +99,6 @@ class TabNetPretrainedModelCheckpoint(Callback):
                 )
             self.best = current
             if self.save_best_only:
-                self.model.save_model(self.filepath)  # Save the entire model
+                self.model_instance.save_model(
+                    self.filepath
+                )  # Save the model checkpoint
