@@ -11,6 +11,8 @@ from src.models.hpo_spaces import (
     estimators_hpo_space_mapping,
     imputer_or_interpolation_hpo_space,
     scaler_hpo_space,
+    voting_hpo_space,
+    stacking_hpo_space,
 )
 from src.data.data_manager import read_csv, save_scores
 from src.models.core import (
@@ -138,31 +140,6 @@ def ensemble_hpo_objective(
     )
 
 
-def voting_hpo_space(trial: optuna.Trial, estimators_num: int) -> dict[str, Any]:
-    return {
-        **imputer_or_interpolation_hpo_space(trial),
-        **scaler_hpo_space(trial),
-        "weights": [
-            trial.suggest_float(f"weight_{i}", 0, 1) for i in range(estimators_num)
-        ],
-    }
-
-
-def stacking_hpo_space(
-    trial: optuna.Trial, base_estimators: dict[str, dict]
-) -> dict[str, Any]:
-    final_estimator_name = trial.suggest_categorical(
-        "final_estimator", list(base_estimators.keys())
-    )
-    return {
-        **imputer_or_interpolation_hpo_space(trial),
-        **scaler_hpo_space(trial),
-        "final_estimator": sklearn_regression_estimators_registry[final_estimator_name](
-            **base_estimators[final_estimator_name]
-        ),
-    }
-
-
 if __name__ == "__main__":
     config_args = parse_config_path_args()
     config_path = (
@@ -172,11 +149,11 @@ if __name__ == "__main__":
     )
     config = init_ensemble_config(config_path)
 
-    train_df, test_df = read_tabular_dataset(config.tabular_dataset_path)
+    train_df, test_df = read_tabular_dataset(config.dataset.tabular_dataset_path)
     train_time_series_encoded_df = read_csv(
-        config.train_time_series_encoded_dataset_path
+        config.dataset.train_time_series_encoded_dataset_path
     )
-    test_time_series_encoded_df = read_csv(config.test_time_series_encoded_dataset_path)
+    test_time_series_encoded_df = read_csv(config.dataset.test_time_series_encoded_dataset_path)
 
     train_df = clean_data(train_df)
 
@@ -241,6 +218,8 @@ if __name__ == "__main__":
             hpo_space = voting_hpo_space
         elif ensemble_config.name == "stacking":
             hpo_space = stacking_hpo_space
+        else:
+            raise ValueError(f"Unknown ensemble estimator {ensemble_config.name}")
 
         base_estimators = [
             (
@@ -262,12 +241,14 @@ if __name__ == "__main__":
                 estimator=ensemble_estimator,
                 estimators=base_estimators,
                 hpo_space=hpo_space,
-                estimators_num=len(base_estimators)
-                if ensemble_config.name == "voting"
-                else None,
-                estimator_best_params=estimator_best_params
-                if ensemble_config.name == "stacking"
-                else None,
+                estimators_num=(
+                    len(base_estimators) if ensemble_config.name == "voting" else None
+                ),
+                estimator_best_params=(
+                    estimator_best_params
+                    if ensemble_config.name == "stacking"
+                    else None
+                ),
             ),
         )
 

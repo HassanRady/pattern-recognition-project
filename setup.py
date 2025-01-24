@@ -8,6 +8,7 @@ required_packages = [
     "pandas",
     "pyarrow",
     "pydantic",
+    "pydantic-settings",
     "scikit-learn>=1.5.2",
     "pyyaml",
     "joblib",

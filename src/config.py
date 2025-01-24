@@ -3,10 +3,20 @@ from typing import Optional, Union
 
 import yaml
 from pydantic import BaseModel, ConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.logger import get_console_logger
 
 LOGGER = get_console_logger(logger_name=__name__)
+
+
+
+class DatasetConfig(BaseModel):
+    tabular_dataset_path: Optional[Path] = None
+    train_time_series_dataset_path: Optional[Path] = None
+    test_time_series_dataset_path: Optional[Path] = None
+    train_time_series_encoded_dataset_path: Optional[Path] = None
+    test_time_series_encoded_dataset_path: Optional[Path] = None
 
 
 class AutoencoderHPOConfig(BaseModel):
@@ -53,15 +63,14 @@ class EnsembleEstimators(BaseModel):
     hpo_trials: int
 
 
-class EnsembleConfig(BaseModel):
-    model_config = ConfigDict(protected_namespaces=())
+class EnsembleConfig(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore")
+
 
     ensemble_estimators: list[EnsembleEstimators]
     hpo_study_name: str
-    tabular_dataset_path: Path
-    train_time_series_encoded_dataset_path: Path
-    test_time_series_encoded_dataset_path: Path
     artifacts_path: Path
+    dataset: DatasetConfig
 
 
 def _load_config(path: Union[str, Path]) -> dict:

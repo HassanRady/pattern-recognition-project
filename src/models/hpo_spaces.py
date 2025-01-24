@@ -10,7 +10,7 @@ from src.models.registry import (
     SklearnScalers,
     ActivationLayers,
     activation_layer_registry,
-    ImputersAndInterplations,
+    ImputersAndInterplations, sklearn_regression_estimators_registry,
 )
 
 
@@ -651,6 +651,31 @@ def tabnet_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
 
 
+def voting_hpo_space(trial: optuna.Trial, estimators_num: int) -> dict[str, Any]:
+    return {
+        **imputer_or_interpolation_hpo_space(trial),
+        **scaler_hpo_space(trial),
+        "weights": [
+            trial.suggest_float(f"weight_{i}", 0, 1) for i in range(estimators_num)
+        ],
+    }
+
+
+def stacking_hpo_space(
+    trial: optuna.Trial, base_estimators: dict[str, dict]
+) -> dict[str, Any]:
+    final_estimator_name = trial.suggest_categorical(
+        "final_estimator", list(base_estimators.keys())
+    )
+    return {
+        **imputer_or_interpolation_hpo_space(trial),
+        **scaler_hpo_space(trial),
+        "final_estimator": sklearn_regression_estimators_registry[final_estimator_name](
+            **base_estimators[final_estimator_name]
+        ),
+    }
+
+
 estimators_hpo_space_mapping = {
     "svm": svm_hpo_space,
     "linear_regression": linear_regression_hpo_space,
@@ -666,4 +691,6 @@ estimators_hpo_space_mapping = {
     "knn": knn_hpo_space,
     "mlp": mlp_hpo_space,
     "tabnet": tabnet_hpo_space,
+    "voting": voting_hpo_space,
+    "stacking": stacking_hpo_space,
 }
