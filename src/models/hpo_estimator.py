@@ -34,8 +34,8 @@ if __name__ == "__main__":
 
     train_df = clean_data(train_df)
 
-    train_df = literature.add_features(train_df)
-    test_df = literature.add_features(test_df)
+    train_df = literature.add_features_1(train_df)
+    test_df = literature.add_features_1(test_df)
 
     train_df = pd.merge(
         train_df, train_time_series_encoded_df, left_index=True, right_index=True

@@ -3,14 +3,17 @@ from typing import Any
 import optuna
 import torch
 from sklearn.impute import SimpleImputer, KNNImputer
+from sklearn.linear_model import LassoCV
 
+from data.utils import Impute_With_Model
 from src.data.interpolations import InterpolationTransformer
 from src.models.registry import (
     sklearn_scaler_registry,
     SklearnScalers,
     ActivationLayers,
     activation_layer_registry,
-    ImputersAndInterplations, sklearn_regression_estimators_registry,
+    ImputersAndInterplations,
+    sklearn_regression_estimators_registry,
 )
 
 
@@ -43,6 +46,14 @@ def imputer_or_interpolation_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
             ],
         )
         imputer_or_interpolation = InterpolationTransformer(method=method)
+    elif imputer_or_interpolation_type == "LassoImputer":
+        model = LassoCV(cv=5)
+        imputer_or_interpolation = Impute_With_Model(model=model, na_frac=0.4)
+
+    else:
+        raise ValueError(
+            f"Invalid imputer_or_interpolation_type: {imputer_or_interpolation_type}"
+        )
 
     return {
         "imputer_or_interpolation": imputer_or_interpolation,
@@ -273,7 +284,14 @@ def xgb_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
         "max_depth": trial.suggest_int("max_depth", 3, 10),
         "learning_rate": trial.suggest_float("learning_rate", 1e-5, 0.3, log=True),
-        "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
+        "reg_alpha": trial.suggest_loguniform("reg_alpha", 1e-5, 1e-1),
+        "reg_lambda": trial.suggest_loguniform("reg_lambda", 1e-5, 1e-1),
+        "subsample": trial.suggest_float("subsample", 0.5, 0.8),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 0.8),
+        "num_parallel_tree": trial.suggest_int("num_parallel_tree", 2, 30),
+        "objective": trial.suggest_categorical(
+            "objective", ["reg:tweedie", "reg:pseudohubererror"]
+        ),
     }
 
 
@@ -430,6 +448,11 @@ def lightgbm_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         "num_leaves": trial.suggest_int("num_leaves", 10, 150),
         "bagging_fraction": trial.suggest_float("bagging_fraction", 0.5, 1.0),
         "min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 50, 150),
+        "subsample": trial.suggest_float("subsample", 0.5, 0.8),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 0.8),
+        "objective": trial.suggest_categorical(
+            "objective", ["poisson", "tweedie", "regression"]
+        ),
     }
 
 
@@ -600,8 +623,14 @@ def catboost_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         "depth": trial.suggest_int("depth", 4, 10),
         "learning_rate": trial.suggest_float("learning_rate", 0.001, 0.3, log=True),
         "subsample": trial.suggest_float("subsample", 0.05, 1.0),
-        "loss_function": trial.suggest_categorical("loss_function", ["RMSE"]),
         "silent": trial.suggest_categorical("silent", [True]),
+        "loss_function": trial.suggest_categorical(
+            "objective", ["Tweedie:variance_power=1.5", "Poisson", "RMSE"]
+        ),
+        "bagging_temperature": trial.suggest_float("bagging_temperature", 0.0, 1.0),
+        "random_strength": trial.suggest_float("random_strength", 1e-3, 10.0),
+        "min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 20, 60),
+        "l2_leaf_reg": trial.suggest_loguniform("l2_leaf_reg", 1e-3, 1e-1),
     }
 
 

@@ -24,22 +24,21 @@ def kappa_scorer(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 
 
 def get_features(
-    df: pd.DataFrame,
+    x: np.ndarray,
+    y: np.ndarray,
     estimator: RegressionEstimator,
     importance_getter: str,
     estimator_save_path: Optional[Path],
     verbose: Optional[int] = 1,
 ) -> Tuple[List[str], float]:
-    df_reset_index = df.reset_index(drop=True)
-    x = df_reset_index.drop(columns=[utils.constants.TARGET_COLUMN_NAME])
-    y = df_reset_index[utils.constants.TARGET_COLUMN_NAME]
 
     rfecv = RFECV(
+        cv=5,
         estimator=estimator,
         importance_getter=importance_getter,
         scoring=make_scorer(kappa_scorer, greater_is_better=True),
         min_features_to_select=1,
-        step=1,
+        step=5,
         verbose=verbose,
         n_jobs=-1,
     )
@@ -53,7 +52,7 @@ def get_features(
     best_selected_features = rfecv.get_feature_names_out().tolist()
 
     LOGGER.info(
-        f"RFECV feature selection: {len(best_selected_features)} from {len(x.columns)}"
+        f"RFECV feature selection: {len(best_selected_features)} from {x.shape[1]} features"
     )
     if estimator_save_path:
         save_model(rfecv.estimator_, estimator_save_path)

@@ -24,7 +24,7 @@ class TabNetWrapper(BaseEstimator, RegressorMixin):
             X, y, test_size=0.2, random_state=42
         )
 
-        history = self.model.fit(
+        self.model.fit(
             X_train=X_train,
             y_train=y_train.reshape(-1, 1),
             eval_set=[(X_valid, y_valid.reshape(-1, 1))],

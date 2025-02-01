@@ -1,4 +1,3 @@
-import copy
 from functools import partial
 from pathlib import Path
 from typing import Callable, Any
@@ -7,24 +6,15 @@ import optuna
 import pandas as pd
 from sklearn.pipeline import Pipeline
 
+from src import utils
 from src.features import rfe
 from src.logger import get_console_logger
 from src.models.registry import (
     RegressionEstimator,
     get_estimator_importance_attribute,
 )
-from src import utils
 
 LOGGER = get_console_logger(logger_name=__name__)
-
-
-def subset_of_features(df: pd.DataFrame, features: list[str]) -> pd.DataFrame:
-    df = df.copy()
-    features = copy.deepcopy(features)
-    LOGGER.info(f"Subsetting features: {len(features)} from {len(df.columns)}")
-    if utils.constants.TARGET_COLUMN_NAME in df.columns:
-        features.append(utils.constants.TARGET_COLUMN_NAME)
-    return df[features]
 
 
 def rfecv_train_hpo_objective(
@@ -81,6 +71,13 @@ def rfecv_train_hpo_objective(
             f"named_steps.estimator.{get_estimator_importance_attribute(estimator)}"
         )
 
+        df_reset_index = df.reset_index(drop=True)
+        x = df_reset_index.drop(columns=[utils.constants.TARGET_COLUMN_NAME])
+        y = df_reset_index[utils.constants.TARGET_COLUMN_NAME]
+
+        # if imputer_or_interpolation == "Impute_With_Model":
+
+
         pipe = Pipeline(
             [
                 ("imputer_or_interpolation", imputer_or_interpolation),
@@ -92,11 +89,12 @@ def rfecv_train_hpo_objective(
             ]
         )
         features, score = rfe.get_features(
-            df=df,
+            x=x,
+            y=y,
             estimator=pipe,
             importance_getter=importance_getter,
             estimator_save_path=estimator_save_path / f"hpo_trial_{trial.number}",
-            verbose=0,
+            verbose=1,
         )
         trial.set_user_attr("features", features)
         return abs(score)

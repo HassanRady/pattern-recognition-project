@@ -3,7 +3,7 @@ from typing import Optional
 
 import pandas as pd
 
-from src.data.data_manager import save_list_to_file, read_list_from_file
+from src.data.data_manager import save_list_to_file, read_list_from_file, save_csv
 from src.features.commons import filter_features
 from src.logger import get_console_logger
 from src.utils.others import skip_if_exists
@@ -72,4 +72,5 @@ def filter_features_by_threshold(
     )
     if save_path:
         save_list_to_file(features, save_path)
+        save_csv(feature_importance, save_path.parent / "correlation_feature_importance.csv")
     return features

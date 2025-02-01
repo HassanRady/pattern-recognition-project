@@ -31,6 +31,7 @@ from sklearn.impute import KNNImputer, SimpleImputer
 
 from torch import nn
 
+from src.data.utils import Impute_With_Model
 from src.models.tabnet import TabNetWrapper
 from src.data.interpolations import InterpolationTransformer
 
@@ -79,16 +80,10 @@ sklearn_scaler_registry = {
 
 
 class ImputersAndInterplations(Enum):
-    KNN = "KNNImputer"
-    SIMPLE = "SimpleImputer"
-    INTERPOLATION = "InterpolationTransformer"
-
-
-imputers_and_interpolations_registry = {
-    ImputersAndInterplations.KNN.value: KNNImputer,
-    ImputersAndInterplations.SIMPLE.value: SimpleImputer,
-    ImputersAndInterplations.INTERPOLATION.value: InterpolationTransformer,
-}
+    # KNN = "KNNImputer"
+    # SIMPLE = "SimpleImputer"
+    # INTERPOLATION = "InterpolationTransformer"
+    LASSO = "LassoImputer"
 
 
 RegressionEstimator = Union[
