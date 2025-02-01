@@ -65,7 +65,7 @@ def filter_features_by_threshold(
           with matching parameters.
     """
     LOGGER.info("Correlation feature selection started")
-    feature_importance = get_feature_importance(df, utils.constants.TARGET_COLUMN_NAME)
+    feature_importance = get_feature_importance(df, utils.constants.SII_COLUMN_NAME)
     features = filter_features(feature_importance, threshold)
     LOGGER.info(
         f"Correlation feature selection: {len(features)} from {len(df.columns) - 1}"

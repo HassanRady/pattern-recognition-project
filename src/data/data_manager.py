@@ -52,10 +52,10 @@ def load_model(path: Path) -> Any:
     return joblib.load(path)
 
 
-def prepare_data_for_estimator(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
-    return df.drop(columns=[utils.constants.TARGET_COLUMN_NAME]).values, df[
-        utils.constants.TARGET_COLUMN_NAME
-    ].values
+def prepare_data_for_estimator(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    return df.drop(columns=[utils.constants.SII_COLUMN_NAME]).values, df[
+        utils.constants.SII_COLUMN_NAME
+    ].values, df[utils.constants.PCIAT_TOTAL_CULUMN_NAME].values
 
 
 def save_scores(scores_dfs: dict[str, pd.DataFrame], path: Path) -> None:

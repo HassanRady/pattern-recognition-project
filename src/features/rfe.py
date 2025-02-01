@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.feature_selection import RFECV
 from sklearn.metrics import make_scorer
 
+from models.utils import calculate_weights
 from src.evaluator import evaluate
 from src.data.data_manager import save_model
 
@@ -42,7 +43,7 @@ def get_features(
         verbose=verbose,
         n_jobs=-1,
     )
-    rfecv.fit(x, y)
+    rfecv.fit(x, y, sample_weitght=calculate_weights(y))
 
     n_subsets_of_features = rfecv.cv_results_["n_features"]
     best_subset_of_feature_idx = np.argwhere(

@@ -80,9 +80,9 @@ sklearn_scaler_registry = {
 
 
 class ImputersAndInterplations(Enum):
-    # KNN = "KNNImputer"
-    # SIMPLE = "SimpleImputer"
-    # INTERPOLATION = "InterpolationTransformer"
+    KNN = "KNNImputer"
+    SIMPLE = "SimpleImputer"
+    INTERPOLATION = "InterpolationTransformer"
     LASSO = "LassoImputer"
 
 
@@ -124,6 +124,13 @@ sklearn_regression_estimators_registry = {
     "voting": VotingRegressor,
     "stacking": StackingRegressor,
 }
+
+def get_estimator_name(estimator: type) -> str:
+    """Returns the key (name) of the estimator from the registry."""
+    for name, cls in sklearn_regression_estimators_registry.items():
+        if cls is estimator:
+            return name
+    raise ValueError("Estimator not found in registry")
 
 
 def parse_sklearn_scaler(scaler: str) -> ScalerType:

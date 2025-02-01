@@ -72,8 +72,8 @@ def rfecv_train_hpo_objective(
         )
 
         df_reset_index = df.reset_index(drop=True)
-        x = df_reset_index.drop(columns=[utils.constants.TARGET_COLUMN_NAME])
-        y = df_reset_index[utils.constants.TARGET_COLUMN_NAME]
+        x = df_reset_index.drop(columns=[utils.constants.SII_COLUMN_NAME])
+        y = df_reset_index[utils.constants.SII_COLUMN_NAME]
 
         # if imputer_or_interpolation == "Impute_With_Model":
 

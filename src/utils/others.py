@@ -6,7 +6,9 @@ from typing import Callable, Any, Union, Optional, List
 
 import pandas as pd
 from sklearn.impute import SimpleImputer, KNNImputer
+from sklearn.linear_model import LassoCV
 
+from data.utils import Impute_With_Model
 from src.data.interpolations import InterpolationTransformer
 from src.models.registry import (
     ImputersAndInterplations,
@@ -177,6 +179,9 @@ def process_hpo_best_space(
         best_space["imputer_or_interpolation"] = InterpolationTransformer(
             method=interpolation_method
         )
+    elif imputer_or_interpolation == ImputersAndInterplations.LASSO.value:
+        best_space["imputer_or_interpolation"] = Impute_With_Model(model=LassoCV(cv=5), na_frac=0.4)
+
     else:
         raise ValueError("Invalid imputer_or_interpolation")
 

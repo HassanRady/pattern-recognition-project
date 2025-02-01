@@ -9,7 +9,7 @@ import torch.nn as nn
 import lightning as pl
 from lightning import Trainer
 
-from src.data.dataset import load_time_series_with_describe_features
+from src.data.dataset import load_time_series
 from src.config import AutoencoderHPOConfig, init_autoencoder_hpo_config
 from src.data.data_manager import save_csv
 from torch.utils.data import DataLoader, TensorDataset, random_split
@@ -236,9 +236,9 @@ if __name__ == "__main__":
     args = parse_config_path_args()
     config = init_autoencoder_hpo_config(args.config_path)
 
-    train_df = load_time_series_with_describe_features(config.train_dataset_path)
+    train_df = load_time_series(config.train_dataset_path, stats=True)
 
-    test_df = load_time_series_with_describe_features(config.test_dataset_path)
+    test_df = load_time_series(config.test_dataset_path, stats=True)
 
     run_hpo_pipeline(
         config=config,

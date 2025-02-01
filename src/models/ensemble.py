@@ -47,8 +47,8 @@ def ensemble_train_cv(
     LOGGER.info("Start train")
     train_time_start = time.time()
 
-    x = df.drop(columns=[utils.constants.TARGET_COLUMN_NAME])
-    y = df[utils.constants.TARGET_COLUMN_NAME]
+    x = df.drop(columns=[utils.constants.SII_COLUMN_NAME])
+    y = df[utils.constants.SII_COLUMN_NAME]
 
     train_scores_dfs = []
     val_scores_dfs = []
@@ -119,7 +119,7 @@ def ensemble_hpo_objective(
 
         trial.set_user_attr(
             utils.constants.FEATURES_COLUMN_NAME,
-            df.columns.drop(utils.constants.TARGET_COLUMN_NAME).tolist(),
+            df.columns.drop(utils.constants.SII_COLUMN_NAME).tolist(),
         )
 
         _, val_scores_df = ensemble_train_cv(

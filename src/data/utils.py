@@ -7,7 +7,24 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 
 # source: https://www.kaggle.com/code/hassanrady/1st-place-cmi-model-v4-1-1-reduced
-def bin_data(train, test, columns, n_bins=10):
+def bin_data(train, test, n_bins=10):
+    columns = [
+        "PAQ_A-PAQ_A_Total",
+        "BMR_norm",
+        "DEE_norm",
+        "GS_min",
+        "GS_max",
+        "BIA-BIA_FFMI",
+        "BIA-BIA_BMC",
+        "Physical-HeartRate",
+        "BIA-BIA_ICW",
+        "Fitness_Endurance-Time_Sec",
+        "BIA-BIA_LDM",
+        "BIA-BIA_SMM",
+        "BIA-BIA_TBW",
+        "DEE_BMR",
+        "ICW_ECW",
+    ]
     # Combine train and test for consistent bin edges
     combined = pd.concat([train, test], axis=0)
 
@@ -52,7 +69,10 @@ class Impute_With_Model(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Fit models to predict missing values."""
         if not isinstance(X, np.ndarray):
-            raise ValueError("Input X must be a numpy ndarray.")
+            if isinstance(X, pd.DataFrame):
+                X = X.values
+            else:
+                raise ValueError("Input X must be a numpy ndarray.")
 
         self.features = list(range(X.shape[1]))
         for idx in self.features:
@@ -81,7 +101,10 @@ class Impute_With_Model(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Impute missing values in the data."""
         if not isinstance(X, np.ndarray):
-            raise ValueError("Input X must be a numpy ndarray.")
+            if isinstance(X, pd.DataFrame):
+                X = X.values
+            else:
+                raise ValueError("Input X must be a numpy ndarray.")
 
         imputed_data = X.copy()
         for idx, model in self.model_dict.items():

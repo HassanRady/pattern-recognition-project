@@ -10,13 +10,26 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from tqdm import tqdm
 
-from src.data.data_manager import prepare_data_for_estimator, save_model
+from models.tabnet import TabNetWrapper
+from models.utils import calculate_weights
+from src.data.data_manager import (
+    prepare_data_for_estimator,
+    save_model,
+    load_model,
+    save_scores,
+    save_csv,
+)
 from src import utils
-from src.evaluator import evaluate
+from src.evaluator import evaluate, optimize_thresholds, threshold_rounder
 from src.logger import (
     get_console_logger,
 )
-from src.models.registry import RegressionEstimator, parse_sklearn_scaler, ScalerType
+from src.models.registry import (
+    RegressionEstimator,
+    parse_sklearn_scaler,
+    ScalerType,
+    get_estimator_name,
+)
 from src.utils.others import process_hpo_best_space
 
 LOGGER = get_console_logger(logger_name=__name__)
@@ -30,11 +43,20 @@ def train(
     scaler: Optional[Union[type[ScalerType], str]] = None,
     *args: Any,
     **kwargs: Any,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, np.ndarray]:
     LOGGER.info("Start train")
     train_time_start = time.time()
 
-    x_train, y_train = prepare_data_for_estimator(df)
+    x_train, y_train_sii, y_train_score = (
+        df.drop(
+            columns=[
+                utils.constants.SII_COLUMN_NAME,
+                utils.constants.PCIAT_TOTAL_CULUMN_NAME,
+            ]
+        ),
+        df[utils.constants.SII_COLUMN_NAME],
+        df[utils.constants.PCIAT_TOTAL_CULUMN_NAME],
+    )
 
     if type(scaler) is str:
         scaler = parse_sklearn_scaler(scaler)
@@ -50,14 +72,20 @@ def train(
         ]
     )
 
-    estimator.fit(x_train, y_train)
+    estimator.fit(
+        x_train,
+        y_train_score,
+        estimator__sample_weight=calculate_weights(y_train_score),
+    )
     save_model(estimator, estimator_path)
 
     y_pred_train = estimator.predict(x_train)
-    train_scores_df = evaluate(y_true=y_train, y_pred=y_pred_train)
+    thresholds = optimize_thresholds(y_train_sii, y_pred_train)
+    y_pred_train = threshold_rounder(y_pred_train, thresholds)
+    train_scores_df = evaluate(y_true=y_train_sii, y_pred=y_pred_train)
 
     LOGGER.info(f"End train in {round(time.time() - train_time_start, 1)} seconds")
-    return train_scores_df
+    return train_scores_df, thresholds
 
 
 def train_cv(
@@ -68,11 +96,10 @@ def train_cv(
     *args: Any,
     **kwargs: Any,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    LOGGER.info("Start train")
+    LOGGER.info("Start train with CV")
     train_time_start = time.time()
 
-    x = df.drop(columns=[utils.constants.TARGET_COLUMN_NAME])
-    y = df[utils.constants.TARGET_COLUMN_NAME]
+    x = df.drop(columns=[utils.constants.SII_COLUMN_NAME])
 
     train_scores_dfs = []
     val_scores_dfs = []
@@ -83,10 +110,17 @@ def train_cv(
         n_splits=n_splits,
     )
     for fold, (train_idx, test_idx) in enumerate(
-        tqdm(SKF.split(x, y), desc="Training Folds", total=n_splits)
+        tqdm(
+            SKF.split(x, df[utils.constants.SII_COLUMN_NAME]),
+            desc="Training Folds",
+            total=n_splits,
+        )
     ):
         x_train, x_val = x.iloc[train_idx], x.iloc[test_idx]
-        y_train, y_val = y.iloc[train_idx], y.iloc[test_idx]
+        y_train_score = df[utils.constants.PCIAT_TOTAL_CULUMN_NAME].iloc[train_idx]
+        y_train_sii = df[utils.constants.SII_COLUMN_NAME].iloc[train_idx]
+        y_val_score = df[utils.constants.PCIAT_TOTAL_CULUMN_NAME].iloc[test_idx]
+        y_val_sii = df[utils.constants.SII_COLUMN_NAME].iloc[test_idx]
 
         if type(scaler) is str:
             scaler = parse_sklearn_scaler(scaler)
@@ -102,13 +136,21 @@ def train_cv(
             ]
         )
 
-        pipe.fit(x_train, y_train)
+        pipe.fit(
+            x_train,
+            y_train_score,
+            estimator__sample_weight=calculate_weights(y_train_score),
+        )
 
         y_pred_train = pipe.predict(x_train)
-        y_pred_val = pipe.predict(x_val)
+        thresholds = optimize_thresholds(y_train_sii, y_pred_train)
+        y_pred_train = threshold_rounder(y_pred_train, thresholds)
 
-        train_scores_dfs.append(evaluate(y_true=y_train, y_pred=y_pred_train))
-        val_scores_dfs.append(evaluate(y_true=y_val, y_pred=y_pred_val))
+        y_pred_val = pipe.predict(x_val)
+        y_pred_val = threshold_rounder(y_pred_val, thresholds)
+
+        train_scores_dfs.append(evaluate(y_true=y_train_sii, y_pred=y_pred_train))
+        val_scores_dfs.append(evaluate(y_true=y_val_sii, y_pred=y_pred_val))
 
     LOGGER.info(f"End train in {round(time.time() - train_time_start, 1)} seconds")
     return pd.concat(train_scores_dfs), pd.concat(val_scores_dfs)
@@ -120,13 +162,15 @@ def score_estimator(
     estimator: RegressionEstimator,
 ) -> pd.DataFrame:
     y_pred = estimator.predict(x)
-    return evaluate(y_true=y, y_pred=y_pred)
+    scores_df, _ = evaluate(y_true=y, y_pred=y_pred)
+    return scores_df
 
 
-def predict(estimator: RegressionEstimator, x: np.ndarray) -> pd.DataFrame:
+def predict(estimator: RegressionEstimator, x: np.ndarray, thresholds: np.ndarray) -> pd.DataFrame:
     preds = estimator.predict(x)
-    preds = preds.round(0).astype(int)
-    df = pd.DataFrame(preds, columns=[utils.constants.TARGET_COLUMN_NAME])
+    preds = threshold_rounder(preds, thresholds)
+    # preds = preds.round(0).astype(int)
+    df = pd.DataFrame(preds, columns=[utils.constants.SII_COLUMN_NAME])
     return df
 
 
@@ -145,7 +189,10 @@ def train_hpo_objective(
 
         trial.set_user_attr(
             utils.constants.FEATURES_COLUMN_NAME,
-            df.columns.drop(utils.constants.TARGET_COLUMN_NAME).tolist(),
+            df.columns.drop(
+                utils.constants.SII_COLUMN_NAME,
+                utils.constants.PCIAT_TOTAL_CULUMN_NAME,
+            ).tolist(),
         )
 
         _, val_scores_df = train_cv(
@@ -198,11 +245,15 @@ def run_hpo_pipeline(
     hpo_study_name: str,
     hpo_path: Path,
     df: pd.DataFrame,
+    test_df: pd.DataFrame,
     estimator: type[RegressionEstimator],
     hpo_space: Callable[[optuna.Trial], dict[str, Any]],
     n_trials: int,
-    estimator_path: Path,
+    artifacts_path: Path,
 ):
+    estimator_name = get_estimator_name(estimator)
+    estimator_path = artifacts_path / "estimators" / estimator_name
+
     _, best_params, best_score, _ = run_hpo(
         n_trials=n_trials,
         study_name=hpo_study_name,
@@ -217,7 +268,7 @@ def run_hpo_pipeline(
 
     best_params = process_hpo_best_space(best_params, estimator)
 
-    train_scores_df = train(
+    train_scores_df, thresholds = train(
         df=df,
         estimator=estimator,
         estimator_path=estimator_path,
@@ -230,6 +281,29 @@ def run_hpo_pipeline(
             utils.constants.KAPPA_COLUMN_NAME: [best_score],
             utils.constants.PARAMS_COLUMN_NAME: str(best_params),
         }
+    )
+
+    train_scores_df[utils.constants.ESTIMATOR_COLUMN_NAME] = estimator_name
+    val_scores_df[utils.constants.ESTIMATOR_COLUMN_NAME] = estimator_name
+    save_scores(
+        {
+            "train": train_scores_df,
+            "val": val_scores_df,
+        },
+        artifacts_path / "scores",
+    )
+
+    # There is an issue with loading TabNet model because of the way it is saved while it is loaded as joblib
+    if estimator_name == "tabnet":
+        estimator = TabNetWrapper()
+    else:
+        estimator = load_model(estimator_path)
+
+    test_preds = predict(estimator, test_df.values, thresholds)
+    test_preds.index = test_df.index
+    save_csv(
+        test_preds,
+        artifacts_path / "predictions" / estimator_name / "submission.csv",
     )
 
     return train_scores_df, val_scores_df, best_params

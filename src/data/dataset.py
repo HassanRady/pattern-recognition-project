@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Tuple, Union
 
+import numpy as np
 import pandas as pd
 
 from src.logger import get_console_logger
@@ -10,9 +11,42 @@ from src.logger import get_console_logger
 LOGGER = get_console_logger(logger_name=__name__)
 
 
-def load_time_series_with_describe_features(
+def time_features(df):
+    df["hours"] = df["time_of_day"] // (3_600 * 1_000_000_000)
+    features = [
+        df["non-wear_flag"].mean(),
+        df["enmo"][df["enmo"] >= 0.05].sum(),
+    ]
+
+    night = (df["hours"] >= 22) | (df["hours"] <= 5)
+    day = (df["hours"] <= 20) & (df["hours"] >= 7)
+    no_mask = np.ones(len(df), dtype=bool)
+
+    keys = ["enmo", "anglez", "light", "battery_voltage"]
+    masks = [no_mask, night, day]
+
+    def extract_stats(data):
+        return [
+            data.mean(),
+            data.std(),
+            data.max(),
+            data.min(),
+            data.diff().mean(),
+            data.diff().std(),
+        ]
+
+    for key in keys:
+        for mask in masks:
+            filtered_data = df.loc[mask, key]
+            features.extend(extract_stats(filtered_data))
+
+    return features
+
+
+def load_time_series(
     dirname: Union[str, Path],
     chunk_size: int = 10,
+    stats: bool = False,
 ) -> pd.DataFrame:
     def _process_file(file_path: str):
         df = pd.read_parquet(file_path)
@@ -21,6 +55,11 @@ def load_time_series_with_describe_features(
             df.describe().values.reshape(-1),
             os.path.basename(os.path.dirname(file_path)).split("=")[1],
         )
+
+    def _process_file2(file_path: str):
+        df = pd.read_parquet(file_path)
+        df.drop("step", axis=1, inplace=True)
+        return time_features(df), os.path.basename(os.path.dirname(file_path)).split("=")[1]
 
     file_paths = [
         os.path.join(entry.path, "part-0.parquet")
@@ -36,9 +75,14 @@ def load_time_series_with_describe_features(
         chunk = file_paths[i : i + chunk_size]
 
         with ThreadPoolExecutor() as executor:
-            results = list(
-                executor.map(_process_file, chunk),
-            )
+            if stats:
+                results = list(
+                    executor.map(_process_file, chunk),
+                )
+            else:
+                results = list(
+                    executor.map(_process_file2, chunk),
+                )
 
         all_results.extend(results)
 

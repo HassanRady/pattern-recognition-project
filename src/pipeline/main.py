@@ -26,7 +26,7 @@ def main(config):
     LOGGER.info("Start pipeline")
     start_time = time.time()
 
-    train_df, test_df = preprocess_data(config.dataset)
+    train_df, test_df = preprocess_data(config.dataset , config.artifacts_path)
 
     train_df, test_df = select_features(
         train_df, test_df, config.artifacts_path, config.correlation_threshold
