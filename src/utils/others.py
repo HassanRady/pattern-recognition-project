@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.impute import SimpleImputer, KNNImputer
 from sklearn.linear_model import LassoCV
 
-from data.utils import Impute_With_Model
+from src.data.utils import Impute_With_Model
 from src.data.interpolations import InterpolationTransformer
 from src.models.registry import (
     ImputersAndInterplations,
@@ -163,24 +163,26 @@ def process_hpo_best_space(
 ) -> dict[str, Any]:
     imputer_or_interpolation = best_space.pop("imputer_or_interpolation")
 
-    if imputer_or_interpolation == ImputersAndInterplations.SIMPLE.value:
+    if imputer_or_interpolation == "SimpleImputer":
         imputer_strategy = best_space.pop("imputer_strategy")
         best_space["imputer_or_interpolation"] = SimpleImputer(
             strategy=imputer_strategy
         )
-    elif imputer_or_interpolation == ImputersAndInterplations.KNN.value:
+    elif imputer_or_interpolation == "KNNImputer":
         n_neighbors = best_space.pop("n_neighbors")
         weights = best_space.pop("weights")
         best_space["imputer_or_interpolation"] = KNNImputer(
             n_neighbors=n_neighbors, weights=weights
         )
-    elif imputer_or_interpolation == ImputersAndInterplations.INTERPOLATION.value:
+    elif imputer_or_interpolation == "InterpolationTransformer":
         interpolation_method = best_space.pop("interpolation_method")
         best_space["imputer_or_interpolation"] = InterpolationTransformer(
             method=interpolation_method
         )
-    elif imputer_or_interpolation == ImputersAndInterplations.LASSO.value:
-        best_space["imputer_or_interpolation"] = Impute_With_Model(model=LassoCV(cv=5), na_frac=0.4)
+    elif imputer_or_interpolation == "LassoImputer":
+        best_space["imputer_or_interpolation"] = Impute_With_Model(
+            model=LassoCV(cv=5), na_frac=0.4
+        )
 
     else:
         raise ValueError("Invalid imputer_or_interpolation")

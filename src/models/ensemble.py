@@ -18,7 +18,7 @@ from src.models.core import (
     run_hpo,
 )
 from src.utils.args import parse_config_path_args
-from src.models.registry import sklearn_regression_estimators_registry
+from src.models.registry import sklearn_regressors_and_classifiers_registry
 import time
 from functools import partial
 from typing import Any, Tuple, Callable, Optional, Union
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     estimator_best_params = {}
     for estimator_name, hpo_trials in estimators_trials.items():
         LOGGER.info(f"Start training estimator {estimator_name}")
-        estimator = sklearn_regression_estimators_registry[estimator_name]
+        estimator = sklearn_regressors_and_classifiers_registry[estimator_name]
         estimator_path = config.artifacts_path / "estimators" / estimator_name
         hpo_space = estimators_hpo_space_mapping[estimator_name]
         train_scores_df, val_scores_df, best_params = run_hpo_pipeline(
@@ -208,7 +208,7 @@ if __name__ == "__main__":
 
     for ensemble_config in config.ensemble_estimators:
         LOGGER.info(f"Start training ensemble {ensemble_config.name}")
-        ensemble_estimator = sklearn_regression_estimators_registry[
+        ensemble_estimator = sklearn_regressors_and_classifiers_registry[
             ensemble_config.name
         ]
         ensemble_estimator_path = (
@@ -224,7 +224,7 @@ if __name__ == "__main__":
         base_estimators = [
             (
                 estimator_name,
-                sklearn_regression_estimators_registry[estimator_name](
+                sklearn_regressors_and_classifiers_registry[estimator_name](
                     **estimator_best_params
                 ),
             )

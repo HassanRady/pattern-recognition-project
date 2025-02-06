@@ -16,7 +16,7 @@ from src.models.core import run_hpo, score_estimator, predict
 from src.models.hpo_spaces import estimators_hpo_space_mapping
 from src.pipeline.steps import rfecv_train_hpo_objective
 from src.utils.args import parse_config_path_args
-from src.models.registry import sklearn_regression_estimators_registry
+from src.models.registry import sklearn_regressors_and_classifiers_registry
 from src import utils
 
 LOGGER = get_console_logger(logger_name=__name__)
@@ -26,7 +26,7 @@ def main(config):
     LOGGER.info("Start pipeline")
     start_time = time.time()
 
-    train_df, test_df = preprocess_data(config.dataset , config.artifacts_path)
+    train_df, test_df = preprocess_data(config.dataset, config.artifacts_path)
 
     train_df, test_df = select_features(
         train_df, test_df, config.artifacts_path, config.correlation_threshold
@@ -34,7 +34,7 @@ def main(config):
 
     for estimator_config in config.estimators:
         LOGGER.info(f"Start HPO for estimator: {estimator_config.name}")
-        estimator = sklearn_regression_estimators_registry[estimator_config.name]
+        estimator = sklearn_regressors_and_classifiers_registry[estimator_config.name]
         estimator_path = config.artifacts_path / "estimators" / estimator_config.name
         best_trial_number, best_space, best_score, user_attrs = run_hpo(
             n_trials=estimator_config.hpo_trials,

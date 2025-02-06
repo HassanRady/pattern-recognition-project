@@ -17,7 +17,7 @@ def preprocess_data(config: DatasetConfig, save_path: Path):
     train_df, test_df = read_tabular_dataset(config.tabular_dataset_path)
 
     train_df, test_df = merge_pca_time_series(config, train_df, test_df, save_path)
-    # train_df, test_df = merge_encoded_time_series(config, train_df, test_df)
+    train_df, test_df = merge_encoded_time_series(config, train_df, test_df)
 
     train_df = clean_features(train_df)
     test_df = clean_features(test_df)
@@ -110,8 +110,6 @@ def merge_pca_time_series(config, train_df, test_df, save_path):
         train_pca = pca.fit_transform(train)
         test_pca = pca.transform(test)
 
-        explained_variance_ratio = pca.explained_variance_ratio_
-
         train_pca_df = pd.DataFrame(
             train_pca, columns=[f"PC_{i + 1}" for i in range(train_pca.shape[1])]
         )
@@ -148,7 +146,6 @@ def merge_pca_time_series(config, train_df, test_df, save_path):
         save_csv(df_test_pca, save_path / "test_pca.csv")
 
     return train_df, test_df
-
 
 
 def merge_encoded_time_series(config, train_df, test_df):

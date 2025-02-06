@@ -90,7 +90,9 @@ class Impute_With_Model(BaseEstimator, TransformerMixin):
                     X_filled = X_feature[:, tmp_indices].copy()
                     for j, col_idx in enumerate(tmp_indices):
                         col_mean = self.mean_dict[col_idx]
-                        X_filled[:, j] = np.where(np.isnan(X_filled[:, j]), col_mean, X_filled[:, j])
+                        X_filled[:, j] = np.where(
+                            np.isnan(X_filled[:, j]), col_mean, X_filled[:, j]
+                        )
                     model_clone.fit(X_filled, X[not_na_mask, idx])
                     self.model_dict[idx] = (model_clone, tmp_indices)
                 else:
@@ -117,7 +119,9 @@ class Impute_With_Model(BaseEstimator, TransformerMixin):
                     X_missing = imputed_data[missing_rows][:, tmp_indices].copy()
                     for j, col_idx in enumerate(tmp_indices):
                         col_mean = self.mean_dict[col_idx]
-                        X_missing[:, j] = np.where(np.isnan(X_missing[:, j]), col_mean, X_missing[:, j])
+                        X_missing[:, j] = np.where(
+                            np.isnan(X_missing[:, j]), col_mean, X_missing[:, j]
+                        )
                     imputed_data[missing_rows, idx] = model[0].predict(X_missing)
 
         return imputed_data

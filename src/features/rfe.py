@@ -5,11 +5,10 @@ import numpy as np
 from sklearn.feature_selection import RFECV
 from sklearn.metrics import make_scorer
 
-from models.utils import calculate_weights
+from src.models.utils import calculate_weights
 from src.evaluator import evaluate
 from src.data.data_manager import save_model
 
-import pandas as pd
 
 from src.logger import get_console_logger
 import src.utils as utils
@@ -32,7 +31,6 @@ def get_features(
     estimator_save_path: Optional[Path],
     verbose: Optional[int] = 1,
 ) -> Tuple[List[str], float]:
-
     rfecv = RFECV(
         cv=5,
         estimator=estimator,

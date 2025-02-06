@@ -5,7 +5,7 @@ import torch
 from sklearn.impute import SimpleImputer, KNNImputer
 from sklearn.linear_model import LassoCV
 
-from data.utils import Impute_With_Model
+from src.data.utils import Impute_With_Model
 from src.data.interpolations import InterpolationTransformer
 from src.models.registry import (
     sklearn_scaler_registry,
@@ -13,7 +13,7 @@ from src.models.registry import (
     ActivationLayers,
     activation_layer_registry,
     ImputersAndInterplations,
-    sklearn_regression_estimators_registry,
+    sklearn_regressors_and_classifiers_registry,
 )
 
 
@@ -294,6 +294,55 @@ def xgb_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         ),
     }
 
+
+def xgb_classifier_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
+    """
+    Defines the hyperparameter optimization (HPO) space for an XGBoost classifier.
+
+    This function uses Optuna to suggest hyperparameters for an XGBoost classifier,
+    including scaling, tree structure parameters, regularization, and learning rate.
+
+    Parameters:
+    ----------
+    trial : optuna.Trial
+        An Optuna trial object used to sample hyperparameters.
+
+    Returns:
+    -------
+    dict[str, Any]
+        A dictionary containing the hyperparameters for an XGBoost classifier, including:
+        - `scaler`: Scaling parameters from `scaler_hpo_space`.
+        - `n_jobs`: Number of parallel threads, fixed to `-1` for maximum parallelism.
+        - `n_estimators`: Number of boosting rounds, sampled as an integer between `100` and `1000`.
+        - `max_depth`: Maximum depth of the tree, controlling the complexity of the model, sampled between `3` and `10`.
+        - `learning_rate`: Step size shrinkage for updates, sampled logarithmically between `1e-5` and `0.3`.
+        - `min_child_weight`: Minimum sum of instance weights required in a child node, sampled between `1` and `10`.
+        - `gamma`: Minimum loss reduction required to make a further partition on a leaf node, sampled between `0` and `5`.
+        - `subsample`: Fraction of training samples used per boosting round, sampled between `0.5` and `1.0`.
+        - `colsample_bytree`: Fraction of features used per tree, sampled between `0.5` and `1.0`.
+        - `reg_alpha`: L1 regularization term on weights, sampled logarithmically between `1e-5` and `1`.
+        - `reg_lambda`: L2 regularization term on weights, sampled logarithmically between `1e-5` and `1`.
+        - `scale_pos_weight`: Controls balance of positive and negative weights, sampled between `0.5` and `2.0`.
+        - `objective`: Specifies the loss function, chosen from standard classification objectives.
+    """
+    return {
+        **imputer_or_interpolation_hpo_space(trial),
+        **scaler_hpo_space(trial),
+        "n_jobs": trial.suggest_categorical("n_jobs", [-1]),
+        "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
+        "max_depth": trial.suggest_int("max_depth", 3, 10),
+        "learning_rate": trial.suggest_float("learning_rate", 1e-5, 0.3, log=True),
+        "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
+        "gamma": trial.suggest_float("gamma", 0, 5),
+        "subsample": trial.suggest_float("subsample", 0.5, 1.0),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
+        "reg_alpha": trial.suggest_loguniform("reg_alpha", 1e-5, 1),
+        "reg_lambda": trial.suggest_loguniform("reg_lambda", 1e-5, 1),
+        "scale_pos_weight": trial.suggest_float("scale_pos_weight", 0.5, 2.0),
+        "objective": trial.suggest_categorical(
+            "objective", ["multi:softprob", "multi:softmax"]
+        ),
+    }
 
 def random_forest_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     """
@@ -699,7 +748,7 @@ def stacking_hpo_space(
     return {
         **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
-        "final_estimator": sklearn_regression_estimators_registry[final_estimator_name](
+        "final_estimator": sklearn_regressors_and_classifiers_registry[final_estimator_name](
             **base_estimators[final_estimator_name]
         ),
     }
@@ -722,4 +771,6 @@ estimators_hpo_space_mapping = {
     "tabnet": tabnet_hpo_space,
     "voting": voting_hpo_space,
     "stacking": stacking_hpo_space,
+    "xgb_classifier": xgb_classifier_hpo_space,
 }
+

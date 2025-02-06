@@ -59,7 +59,9 @@ def load_time_series(
     def _process_file2(file_path: str):
         df = pd.read_parquet(file_path)
         df.drop("step", axis=1, inplace=True)
-        return time_features(df), os.path.basename(os.path.dirname(file_path)).split("=")[1]
+        return time_features(df), os.path.basename(os.path.dirname(file_path)).split(
+            "="
+        )[1]
 
     file_paths = [
         os.path.join(entry.path, "part-0.parquet")

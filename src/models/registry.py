@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import Union
 
-from catboost import CatBoostRegressor
-from lightgbm import LGBMRegressor
+from catboost import CatBoostRegressor, CatBoostClassifier
+from lightgbm import LGBMRegressor, LGBMClassifier
 from sklearn.ensemble import (
     RandomForestRegressor,
     AdaBoostRegressor,
@@ -24,16 +24,11 @@ from sklearn.preprocessing import (
 )
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
-from xgboost import XGBRegressor
-
-
-from sklearn.impute import KNNImputer, SimpleImputer
+from xgboost import XGBRegressor, XGBClassifier
 
 from torch import nn
 
-from src.data.utils import Impute_With_Model
 from src.models.tabnet import TabNetWrapper
-from src.data.interpolations import InterpolationTransformer
 
 ActivationLayerType = Union[nn.ReLU, nn.Tanh]
 
@@ -83,7 +78,7 @@ class ImputersAndInterplations(Enum):
     KNN = "KNNImputer"
     SIMPLE = "SimpleImputer"
     INTERPOLATION = "InterpolationTransformer"
-    LASSO = "LassoImputer"
+    # LASSO = "LassoImputer"
 
 
 RegressionEstimator = Union[
@@ -105,7 +100,7 @@ RegressionEstimator = Union[
     TabNetWrapper,
 ]
 
-sklearn_regression_estimators_registry = {
+sklearn_regressors_and_classifiers_registry = {
     "svm": SVR,
     "linear_regression": LinearRegression,
     "ridge": Ridge,
@@ -123,11 +118,26 @@ sklearn_regression_estimators_registry = {
     "tabnet": TabNetWrapper,
     "voting": VotingRegressor,
     "stacking": StackingRegressor,
+    "xgb_classifier": XGBClassifier,
+    "lightgbm_classifier": LGBMClassifier,
+    "catboost_classifier": CatBoostClassifier
+}
+
+Classifiers = Union[
+    XGBClassifier,
+    LGBMClassifier,
+    CatBoostClassifier
+]
+
+sklearn_classifiers_registry = {
+    "xgb_classifier": XGBClassifier,
+    "lightgbm_classifier": LGBMClassifier,
+    "catboost_classifier": CatBoostClassifier
 }
 
 def get_estimator_name(estimator: type) -> str:
     """Returns the key (name) of the estimator from the registry."""
-    for name, cls in sklearn_regression_estimators_registry.items():
+    for name, cls in sklearn_regressors_and_classifiers_registry.items():
         if cls is estimator:
             return name
     raise ValueError("Estimator not found in registry")
@@ -143,3 +153,7 @@ def get_estimator_importance_attribute(estimator: type[RegressionEstimator]) -> 
         if hasattr(estimator, "feature_importances_")
         else "coef_"
     )
+
+
+def is_estimator_classifier(estimator: type) -> bool:
+    return estimator in sklearn_classifiers_registry.values()

@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
@@ -37,7 +35,9 @@ def optimize_thresholds(
     )
 
     if not result.success:
-        print("Warning: Kappa Optimization did not converge. Using the best result found.")
+        print(
+            "Warning: Kappa Optimization did not converge. Using the best result found."
+        )
 
     return result.x
 

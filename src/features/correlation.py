@@ -72,5 +72,7 @@ def filter_features_by_threshold(
     )
     if save_path:
         save_list_to_file(features, save_path)
-        save_csv(feature_importance, save_path.parent / "correlation_feature_importance.csv")
+        save_csv(
+            feature_importance, save_path.parent / "correlation_feature_importance.csv"
+        )
     return features
