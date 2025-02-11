@@ -16,7 +16,7 @@ from src.features import literature
 def preprocess_data(config: DatasetConfig, save_path: Path):
     train_df, test_df = read_tabular_dataset(config.tabular_dataset_path)
 
-    # train_df, test_df = merge_pca_time_series(config, train_df, test_df, save_path)
+    train_df, test_df = merge_pca_time_series(config, train_df, test_df, save_path)
     # train_df, test_df = merge_encoded_time_series(config, train_df, test_df)
 
     train_df = clean_features(train_df)

@@ -27,7 +27,6 @@ if __name__ == "__main__":
         hpo_space = estimators_hpo_space_mapping[estimator_config.name]
         run_hpo_pipeline(
             hpo_study_name=config.hpo_study_name,
-            hpo_path=config.artifacts_path / "hpo" / estimator_config.name,
             df=train_df,
             test_df=test_df,
             estimator=estimator,

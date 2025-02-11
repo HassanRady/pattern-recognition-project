@@ -12,7 +12,7 @@ from src.data.utils import Impute_With_Model
 from src.data.interpolations import InterpolationTransformer
 from src.models.registry import (
     ImputersAndInterplations,
-    RegressionEstimator,
+    RegressionEstimator, parse_sklearn_scaler,
 )
 from src.logger import get_console_logger
 
@@ -159,9 +159,11 @@ def skip_if_exists(
 
 
 def process_hpo_best_space(
-    best_space: dict[str, Any], estimator: type[RegressionEstimator]
+    best_space: dict[str, Any], estimator: type[RegressionEstimator], base_estimators_len = None
 ) -> dict[str, Any]:
     imputer_or_interpolation = best_space.pop("imputer_or_interpolation")
+    scaler = best_space.pop("scaler")
+    best_space["scaler"] = parse_sklearn_scaler(scaler)
 
     if imputer_or_interpolation == "SimpleImputer":
         imputer_strategy = best_space.pop("imputer_strategy")
@@ -192,4 +194,10 @@ def process_hpo_best_space(
             "lr": best_space.pop("lr"),
             "weight_decay": best_space.pop("weight_decay"),
         }
+    elif estimator.__name__ == "VotingRegressor":
+        weights_estimator = []
+        for i in range(base_estimators_len):
+            weights_estimator.append(best_space.pop(f"weight_{i}"))
+        best_space["weights"] = weights_estimator
+
     return best_space

@@ -51,23 +51,13 @@ class PipelineConfig(BaseModel):
     pseudo_labeling: Optional[bool] = False
 
 
-class EnsembleEstimators(BaseModel):
-    """Configuration for the pipeline of estimators"""
-
-    model_config = ConfigDict(protected_namespaces=())
-
-    name: str
-    estimators: list[EstimatorsPipeline]
-    hpo_trials: int
-
-
 class EnsembleConfig(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
-    ensemble_estimators: list[EnsembleEstimators]
     hpo_study_name: str
     artifacts_path: Path
     dataset: DatasetConfig
+    ensembles: list[EstimatorsPipeline]
 
 
 def _load_config(path: Union[str, Path]) -> dict:

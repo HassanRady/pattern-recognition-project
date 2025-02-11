@@ -6,6 +6,7 @@ from typing import Any, Tuple, Callable, Optional, Union
 import numpy as np
 import optuna
 import pandas as pd
+from sklearn import clone
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from tqdm import tqdm
@@ -108,13 +109,9 @@ def pseudo_labeling_classifier(
 
 def train_regressor(
     df: pd.DataFrame,
-    estimator: type[RegressionEstimator],
+    estimator: RegressionEstimator,
     estimator_path: Path,
-    imputer_or_interpolation: Any,
-    scaler: Optional[Union[type[ScalerType], str]] = None,
     pseudo_labeling: bool = False,
-    *args: Any,
-    **kwargs: Any,
 ) -> Tuple[pd.DataFrame, np.ndarray]:
     LOGGER.info("Start train")
     train_time_start = time.time()
@@ -129,20 +126,6 @@ def train_regressor(
         ),
         _df[utils.constants.SII_COLUMN_NAME],
         _df[utils.constants.PCIAT_TOTAL_CULUMN_NAME],
-    )
-
-    if type(scaler) is str:
-        scaler = parse_sklearn_scaler(scaler)
-
-    estimator = Pipeline(
-        [
-            ("imputer_or_interpolation", imputer_or_interpolation),
-            ("scaler", scaler() if scaler else None),
-            (
-                "estimator",
-                estimator(*args, **kwargs),
-            ),
-        ]
     )
 
     estimator.fit(
@@ -171,13 +154,9 @@ def train_regressor(
 
 def train_classifier(
     df: pd.DataFrame,
-    estimator: type[Classifiers],
+    estimator: Classifiers,
     estimator_path: Path,
-    imputer_or_interpolation: Any,
-    scaler: Optional[Union[type[ScalerType], str]] = None,
     pseudo_labeling: bool = False,
-    *args: Any,
-    **kwargs: Any,
 ) -> Tuple[pd.DataFrame, None]:
     LOGGER.info("Start train")
     train_time_start = time.time()
@@ -191,20 +170,6 @@ def train_classifier(
             ]
         ),
         _df[utils.constants.SII_COLUMN_NAME],
-    )
-
-    if type(scaler) is str:
-        scaler = parse_sklearn_scaler(scaler)
-
-    estimator = Pipeline(
-        [
-            ("imputer_or_interpolation", imputer_or_interpolation),
-            ("scaler", scaler() if scaler else None),
-            (
-                "estimator",
-                estimator(*args, **kwargs),
-            ),
-        ]
     )
 
     estimator.fit(
@@ -230,12 +195,8 @@ def train_classifier(
 
 def train_cv_regressor(
     df: pd.DataFrame,
-    estimator: type[RegressionEstimator],
-    imputer_or_interpolation: Any,
-    scaler: Optional[Union[type[ScalerType], str]] = None,
+    estimator: RegressionEstimator,
     pseudo_labeling: bool = False,
-    *args: Any,
-    **kwargs: Any,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     LOGGER.info("Start train with CV")
     train_time_start = time.time()
@@ -270,19 +231,7 @@ def train_cv_regressor(
         y_val_score = _df[utils.constants.PCIAT_TOTAL_CULUMN_NAME].iloc[test_idx]
         y_val_sii = _df[utils.constants.SII_COLUMN_NAME].iloc[test_idx]
 
-        if type(scaler) is str:
-            scaler = parse_sklearn_scaler(scaler)
-
-        pipe = Pipeline(
-            [
-                ("imputer_or_interpolation", imputer_or_interpolation),
-                ("scaler", scaler() if scaler else None),
-                (
-                    "estimator",
-                    estimator(*args, **kwargs),
-                ),
-            ]
-        )
+        pipe = clone(estimator)
 
         pipe.fit(
             x_train,
@@ -313,12 +262,8 @@ def train_cv_regressor(
 
 def train_cv_classifier(
     df: pd.DataFrame,
-    estimator: type[Classifiers],
-    imputer_or_interpolation: Any,
-    scaler: Optional[Union[type[ScalerType], str]] = None,
+    estimator: Classifiers,
     pseudo_labeling: bool = False,
-    *args: Any,
-    **kwargs: Any,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     LOGGER.info("Start train with CV")
     train_time_start = time.time()
@@ -351,19 +296,7 @@ def train_cv_classifier(
         y_train_sii = _df[utils.constants.SII_COLUMN_NAME].iloc[train_idx]
         y_val_sii = _df[utils.constants.SII_COLUMN_NAME].iloc[test_idx]
 
-        if type(scaler) is str:
-            scaler = parse_sklearn_scaler(scaler)
-
-        pipe = Pipeline(
-            [
-                ("imputer_or_interpolation", imputer_or_interpolation),
-                ("scaler", scaler() if scaler else None),
-                (
-                    "estimator",
-                    estimator(*args, **kwargs),
-                ),
-            ]
-        )
+        pipe = clone(estimator)
 
         pipe.fit(
             x_train,
@@ -438,11 +371,21 @@ def train_hpo_objective(
             ).tolist(),
         )
 
+        pipe = Pipeline(
+            [
+                ("imputer_or_interpolation", params.pop("imputer_or_interpolation")),
+                ("scaler", params.pop("scaler")()),
+                (
+                    "estimator",
+                    estimator(**params),
+                ),
+            ]
+        )
+
         _, val_scores_df = train_cv(
             df=df,
-            estimator=estimator,
+            estimator=pipe,
             pseudo_labeling=pseudo_labeling,
-            **params,
         )
         return val_scores_df.mean().loc[utils.constants.KAPPA_COLUMN_NAME]
 
@@ -487,7 +430,6 @@ def run_hpo(
 
 def run_hpo_pipeline(
     hpo_study_name: str,
-    hpo_path: Path,
     df: pd.DataFrame,
     test_df: pd.DataFrame,
     estimator: type[RegressionEstimator],
@@ -507,7 +449,7 @@ def run_hpo_pipeline(
     _, best_params, best_score, _ = run_hpo(
         n_trials=n_trials,
         study_name=hpo_study_name,
-        hpo_path=hpo_path,
+        hpo_path=artifacts_path / "hpo" / estimator_name,
         n_jobs=1,
         objective=train_hpo_objective(
             df=df,
@@ -519,12 +461,22 @@ def run_hpo_pipeline(
 
     best_params = process_hpo_best_space(best_params, estimator)
 
+    pipe = Pipeline(
+        [
+            ("imputer_or_interpolation", best_params.pop("imputer_or_interpolation")),
+            ("scaler", best_params.pop("scaler")()),
+            (
+                "estimator",
+                estimator(**best_params),
+            ),
+        ]
+    )
+
     train_scores_df, thresholds = train(
         df=df,
-        estimator=estimator,
+        estimator=pipe,
         estimator_path=estimator_path,
         pseudo_labeling=pseudo_labeling,
-        **best_params,
     )
     train_scores_df[utils.constants.PARAMS_COLUMN_NAME] = str(best_params)
 
