@@ -338,7 +338,6 @@ def xgb_classifier_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
         "reg_alpha": trial.suggest_loguniform("reg_alpha", 1e-5, 1),
         "reg_lambda": trial.suggest_loguniform("reg_lambda", 1e-5, 1),
-        "scale_pos_weight": trial.suggest_float("scale_pos_weight", 0.5, 2.0),
         "objective": trial.suggest_categorical(
             "objective", ["multi:softprob", "multi:softmax"]
         ),
@@ -503,6 +502,41 @@ def lightgbm_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
             "objective", ["poisson", "tweedie", "regression"]
         ),
     }
+
+
+def lightgbm_classifier_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
+    """
+    Defines the hyperparameter optimization (HPO) space for a LightGBM model using Optuna.
+
+    Parameters:
+    ----------
+    trial : optuna.Trial
+        An Optuna trial object used to sample hyperparameters.
+
+    Returns:
+    -------
+    dict[str, Any]
+        A dictionary containing the hyperparameters for a LightGBM model.
+    """
+    return {
+        **imputer_or_interpolation_hpo_space(trial),  # Ensure imputation settings are included
+        **scaler_hpo_space(trial),  # Ensure scaling settings are included
+        "n_jobs": trial.suggest_categorical("n_jobs", [-1]),
+        "verbose": trial.suggest_categorical("verbose", [-1]),
+        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.1, log=True),
+        "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
+        "max_depth": trial.suggest_int("max_depth", 10, 100),
+        "num_leaves": trial.suggest_int("num_leaves", 10, 150),
+        "bagging_fraction": trial.suggest_float("bagging_fraction", 0.5, 1.0),
+        "min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 50, 150),
+        "subsample": trial.suggest_float("subsample", 0.5, 0.8),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 0.8),
+        "lambda_l1": trial.suggest_float("lambda_l1", 1e-8, 10.0, log=True),
+        "lambda_l2": trial.suggest_float("lambda_l2", 1e-8, 10.0, log=True),
+        "min_gain_to_split": trial.suggest_float("min_gain_to_split", 0.0, 0.1),
+        "objective": trial.suggest_categorical("objective", ["multiclass"]),
+    }
+
 
 
 def knn_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
@@ -683,6 +717,60 @@ def catboost_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     }
 
 
+def catboost_classifier_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
+    """
+    Defines the hyperparameter optimization (HPO) space for a CatBoost model.
+
+    This function uses Optuna to suggest hyperparameters for a CatBoost model,
+    including scaling, number of iterations, tree depth, learning rate, and subsampling.
+
+    Parameters:
+    ----------
+    trial : optuna.Trial
+        An Optuna trial object used to sample hyperparameters.
+
+    Returns:
+    -------
+    dict[str, Any]
+        A dictionary containing the hyperparameters for a CatBoost model, including:
+        - `scaler`: Scaling parameters from `scaler_hpo_space`.
+        - `iterations`: Number of boosting iterations, sampled as an integer between `100` and `1000`.
+        - `depth`: Depth of the tree, sampled as an integer between `4` and `10`.
+        - `learning_rate`: Learning rate for boosting, sampled logarithmically between `0.001` and `0.3`.
+        - `subsample`: Fraction of samples used for training each tree, sampled between `0.05` and `1.0`.
+        - `loss_function`: Loss function to optimize, chosen from `["RMSE"]`.
+        - `silent`: Whether to suppress output during training, fixed to `True`.
+
+    Example:
+    --------
+    >>> catboost_hpo_space(trial)
+    {
+        "scaler": <ScalerClass>,
+        "iterations": 500,
+        "depth": 6,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "loss_function": "RMSE",
+        "silent": True,
+    }
+    """
+    return {
+        **imputer_or_interpolation_hpo_space(trial),
+        **scaler_hpo_space(trial),
+        "iterations": trial.suggest_int("iterations", 100, 1000),
+        "depth": trial.suggest_int("depth", 4, 10),
+        "learning_rate": trial.suggest_float("learning_rate", 0.001, 0.3, log=True),
+        "silent": trial.suggest_categorical("silent", [True]),
+        "loss_function": trial.suggest_categorical(
+            "objective", ["MultiClass"]
+        ),
+        "bagging_temperature": trial.suggest_float("bagging_temperature", 0.0, 1.0),
+        "random_strength": trial.suggest_float("random_strength", 1e-3, 10.0),
+        "min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 20, 60),
+        "l2_leaf_reg": trial.suggest_loguniform("l2_leaf_reg", 1e-3, 1e-1),
+    }
+
+
 def autoencoder_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     n_layers = trial.suggest_int("n_layers", 1, 6)
     return {
@@ -772,5 +860,7 @@ estimators_hpo_space_mapping = {
     "voting": voting_hpo_space,
     "stacking": stacking_hpo_space,
     "xgb_classifier": xgb_classifier_hpo_space,
+    "lightgbm_classifier": lightgbm_classifier_hpo_space,
+    "catboost_classifier": catboost_classifier_hpo_space,
 }
 

@@ -27,6 +27,8 @@ def main(config):
     start_time = time.time()
 
     train_df, test_df = preprocess_data(config.dataset, config.artifacts_path)
+    train_df.dropna(subset=utils.constants.SII_COLUMN_NAME, inplace=True)
+    train_df.drop(columns=[utils.constants.PCIAT_TOTAL_CULUMN_NAME], inplace=True)
 
     train_df, test_df = select_features(
         train_df, test_df, config.artifacts_path, config.correlation_threshold
@@ -64,7 +66,9 @@ def main(config):
         estimator_path = estimator_path / f"hpo_trial_{best_trial_number}"
         estimator = load_model(estimator_path)
 
-        x, y = prepare_data_for_estimator(train_df_for_estimator)
+        x, y = train_df_for_estimator.drop(columns=[utils.constants.SII_COLUMN_NAME]), train_df_for_estimator[
+            utils.constants.SII_COLUMN_NAME
+        ]
         train_scores_df = score_estimator(
             x=x,
             y=y,

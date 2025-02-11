@@ -32,7 +32,7 @@ def get_features(
     verbose: Optional[int] = 1,
 ) -> Tuple[List[str], float]:
     rfecv = RFECV(
-        cv=5,
+        cv=4,
         estimator=estimator,
         importance_getter=importance_getter,
         scoring=make_scorer(kappa_scorer, greater_is_better=True),
@@ -41,7 +41,7 @@ def get_features(
         verbose=verbose,
         n_jobs=-1,
     )
-    rfecv.fit(x, y, sample_weitght=calculate_weights(y))
+    rfecv.fit(x, y)
 
     n_subsets_of_features = rfecv.cv_results_["n_features"]
     best_subset_of_feature_idx = np.argwhere(

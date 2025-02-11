@@ -48,6 +48,7 @@ class PipelineConfig(BaseModel):
     hpo_study_name: str
     artifacts_path: Path
     dataset: DatasetConfig
+    pseudo_labeling: Optional[bool] = False
 
 
 class EnsembleEstimators(BaseModel):

@@ -34,4 +34,5 @@ if __name__ == "__main__":
             hpo_space=hpo_space,
             n_trials=estimator_config.hpo_trials,
             artifacts_path=config.artifacts_path,
+            pseudo_labeling=config.pseudo_labeling,
         )
