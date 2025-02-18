@@ -522,7 +522,7 @@ def lightgbm_classifier_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         **imputer_or_interpolation_hpo_space(trial),  # Ensure imputation settings are included
         **scaler_hpo_space(trial),  # Ensure scaling settings are included
         "n_jobs": trial.suggest_categorical("n_jobs", [1]),
-        "verbose": trial.suggest_categorical("verbose", [0]),
+        "verbose": trial.suggest_categorical("verbose", [-1]),
         "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.2, log=True),
         "n_estimators": trial.suggest_int("n_estimators", 10, 1000),
         "max_depth": trial.suggest_int("max_depth", 10, 1000),
