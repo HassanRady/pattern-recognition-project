@@ -73,7 +73,7 @@ def rfecv_train_hpo_objective(
 
         df_reset_index = df.reset_index(drop=True)
         x = df_reset_index.drop(columns=[utils.constants.SII_COLUMN_NAME])
-        y = df_reset_index[utils.constants.SII_COLUMN_NAME]
+        y = df_reset_index[utils.constants.SII_COLUMN_NAME].astype(int)
 
         pipe = Pipeline(
             [

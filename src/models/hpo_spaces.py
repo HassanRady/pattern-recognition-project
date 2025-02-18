@@ -521,14 +521,14 @@ def lightgbm_classifier_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     return {
         **imputer_or_interpolation_hpo_space(trial),  # Ensure imputation settings are included
         **scaler_hpo_space(trial),  # Ensure scaling settings are included
-        "n_jobs": trial.suggest_categorical("n_jobs", [-1]),
-        "verbose": trial.suggest_categorical("verbose", [-1]),
-        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.1, log=True),
-        "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
-        "max_depth": trial.suggest_int("max_depth", 10, 100),
-        "num_leaves": trial.suggest_int("num_leaves", 10, 150),
+        "n_jobs": trial.suggest_categorical("n_jobs", [1]),
+        "verbose": trial.suggest_categorical("verbose", [0]),
+        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.2, log=True),
+        "n_estimators": trial.suggest_int("n_estimators", 10, 1000),
+        "max_depth": trial.suggest_int("max_depth", 10, 1000),
+        "num_leaves": trial.suggest_int("num_leaves", 100, 300),
         "bagging_fraction": trial.suggest_float("bagging_fraction", 0.5, 1.0),
-        "min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 50, 150),
+        "min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 150, 350),
         "subsample": trial.suggest_float("subsample", 0.5, 0.8),
         "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 0.8),
         "lambda_l1": trial.suggest_float("lambda_l1", 1e-8, 10.0, log=True),
