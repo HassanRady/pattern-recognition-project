@@ -343,6 +343,7 @@ def xgb_classifier_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         ),
     }
 
+
 def random_forest_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
     """
     Defines the hyperparameter optimization (HPO) space for a Random Forest model.
@@ -519,7 +520,9 @@ def lightgbm_classifier_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         A dictionary containing the hyperparameters for a LightGBM model.
     """
     return {
-        **imputer_or_interpolation_hpo_space(trial),  # Ensure imputation settings are included
+        **imputer_or_interpolation_hpo_space(
+            trial
+        ),  # Ensure imputation settings are included
         **scaler_hpo_space(trial),  # Ensure scaling settings are included
         "n_jobs": trial.suggest_categorical("n_jobs", [1]),
         "verbose": trial.suggest_categorical("verbose", [-1]),
@@ -536,7 +539,6 @@ def lightgbm_classifier_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         "min_gain_to_split": trial.suggest_float("min_gain_to_split", 0.0, 0.1),
         "objective": trial.suggest_categorical("objective", ["multiclass"]),
     }
-
 
 
 def knn_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
@@ -761,13 +763,28 @@ def catboost_classifier_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
         "depth": trial.suggest_int("depth", 4, 10),
         "learning_rate": trial.suggest_float("learning_rate", 0.001, 0.3, log=True),
         "silent": trial.suggest_categorical("silent", [True]),
-        "loss_function": trial.suggest_categorical(
-            "objective", ["MultiClass"]
-        ),
+        "loss_function": trial.suggest_categorical("objective", ["MultiClass"]),
         "bagging_temperature": trial.suggest_float("bagging_temperature", 0.0, 1.0),
         "random_strength": trial.suggest_float("random_strength", 1e-3, 10.0),
         "min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 20, 60),
         "l2_leaf_reg": trial.suggest_loguniform("l2_leaf_reg", 1e-3, 1e-1),
+    }
+
+
+def extra_trees_classifier_hpo_space(trial: optuna.Trial) -> dict[str, Any]:
+    return {
+        **imputer_or_interpolation_hpo_space(trial),
+        **scaler_hpo_space(trial),
+        "n_estimators": trial.suggest_int("n_estimators", 50, 500),
+        "max_depth": trial.suggest_int("max_depth", 3, 20),
+        "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
+        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 20),
+        "max_features": trial.suggest_categorical(
+            "max_features", ["sqrt", "log2", None]
+        ),
+        "bootstrap": trial.suggest_categorical("bootstrap", [True, False]),
+        "criterion": trial.suggest_categorical("criterion", ["gini", "entropy"]),
+        "class_weight": trial.suggest_categorical("class_weight", [None, "balanced"]),
     }
 
 
@@ -836,9 +853,9 @@ def stacking_hpo_space(
     return {
         **imputer_or_interpolation_hpo_space(trial),
         **scaler_hpo_space(trial),
-        "final_estimator": sklearn_regressors_and_classifiers_registry[final_estimator_name](
-            **base_estimators[final_estimator_name]
-        ),
+        "final_estimator": sklearn_regressors_and_classifiers_registry[
+            final_estimator_name
+        ](**base_estimators[final_estimator_name]),
     }
 
 
@@ -862,5 +879,5 @@ estimators_hpo_space_mapping = {
     "xgb_classifier": xgb_classifier_hpo_space,
     "lightgbm_classifier": lightgbm_classifier_hpo_space,
     "catboost_classifier": catboost_classifier_hpo_space,
+    "extra_trees_classifier": extra_trees_classifier_hpo_space,
 }
-

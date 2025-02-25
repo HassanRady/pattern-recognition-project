@@ -9,6 +9,7 @@ from sklearn.ensemble import (
     GradientBoostingRegressor,
     VotingRegressor,
     StackingRegressor,
+    ExtraTreesClassifier,
 )
 from sklearn.linear_model import Ridge, Lasso, LinearRegression, ElasticNet
 from sklearn.neighbors import KNeighborsRegressor
@@ -120,20 +121,24 @@ sklearn_regressors_and_classifiers_registry = {
     "stacking": StackingRegressor,
     "xgb_classifier": XGBClassifier,
     "lightgbm_classifier": LGBMClassifier,
-    "catboost_classifier": CatBoostClassifier
+    "catboost_classifier": CatBoostClassifier,
+    "extra_trees_classifier": ExtraTreesClassifier,
 }
 
 Classifiers = Union[
     XGBClassifier,
     LGBMClassifier,
-    CatBoostClassifier
+    CatBoostClassifier,
+    ExtraTreesClassifier,
 ]
 
 sklearn_classifiers_registry = {
     "xgb_classifier": XGBClassifier,
     "lightgbm_classifier": LGBMClassifier,
-    "catboost_classifier": CatBoostClassifier
+    "catboost_classifier": CatBoostClassifier,
+    "extra_trees_classifier": ExtraTreesClassifier,
 }
+
 
 def get_estimator_name(estimator: type) -> str:
     """Returns the key (name) of the estimator from the registry."""
