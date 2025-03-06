@@ -125,8 +125,8 @@ def merge_pca_time_series(config, train_df, test_df, save_path):
         test_df = pd.merge(test_df, df_test_pca, how="left", on="id")
         return train_df, test_df
 
-    train_time_series_raw_df = load_time_series(config.train_time_series_dataset_path)
-    test_time_series_raw_df = load_time_series(config.test_time_series_dataset_path)
+    train_time_series_raw_df = load_time_series(config.train_time_series_dataset_path, stats=True)
+    test_time_series_raw_df = load_time_series(config.test_time_series_dataset_path, stats=True)
 
     df_train_pca, df_test_pca, pca = perform_pca(
         train=train_time_series_raw_df.drop("id", axis=1),

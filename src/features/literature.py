@@ -25,6 +25,10 @@ def add_features_1(df: pd.DataFrame) -> pd.DataFrame:
     _df["Muscle_to_Fat"] = _df["BIA-BIA_SMM"] / _df["BIA-BIA_FMI"]
     _df["Hydration_Status"] = _df["BIA-BIA_TBW"] / _df["Physical-Weight"]
     _df["ICW_TBW"] = _df["BIA-BIA_ICW"] / _df["BIA-BIA_TBW"]
+
+    # _df["Internet_Hours_sex"] = (
+    #     _df["PreInt_EduHx-computerinternet_hoursday"] * _df["Basic_Demos-Sex"]
+    # )
     return _df
 
 
@@ -42,6 +46,8 @@ def add_features_2(df):
 
     # Age groups
     df["group"] = df["Basic_Demos-Age"].apply(assign_group)
+
+    # df["Internet_Hours_age_group"] = df["PreInt_EduHx-computerinternet_hoursday"] * df["group"]
 
     # BMI
     BMI_map = {

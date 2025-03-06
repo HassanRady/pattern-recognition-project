@@ -38,6 +38,8 @@ def preprocess_data(config: DatasetConfig, save_path: Path):
 
     train_df = clean_features(train_df)
     test_df = clean_features(test_df)
+    train_df = clean_data(train_df)
+    train_df, test_df = process_categorical_features(train_df, test_df)
 
     train_df = literature.add_features_1(train_df)
     test_df = literature.add_features_1(test_df)
@@ -47,9 +49,7 @@ def preprocess_data(config: DatasetConfig, save_path: Path):
 
     train_df, test_df = bin_data(train_df, test_df, n_bins=10)
 
-    train_df, test_df = process_categorical_features(train_df, test_df)
 
-    train_df = clean_data(train_df)
     return train_df, test_df
 
 
